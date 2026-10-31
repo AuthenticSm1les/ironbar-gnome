@@ -1,0 +1,315 @@
+/* GNOME Shell top bar replica */
+
+:root {
+    --panel-bg: #000000;
+    --panel-fg: #ffffff;
+    --hover: rgba(255, 255, 255, 0.17);
+    --active: rgba(255, 255, 255, 0.25);
+
+    --menu-bg: #222226;
+    --menu-border: rgba(255, 255, 255, 0.08);
+    --tile-bg: #3a3a3e;
+    --tile-hover: #47474c;
+    --accent: #3584e4;
+    --accent-hover: #4a90e8;
+    --dim: rgba(255, 255, 255, 0.6);
+}
+
+* {
+    font-family: "Adwaita Sans", "Cantarell", sans-serif;
+    font-size: 14.5px;
+    color: var(--panel-fg);
+    border: none;
+    box-shadow: none;
+    text-shadow: none;
+    -gtk-icon-shadow: none;
+}
+
+window, #bar {
+    background-color: var(--panel-bg);
+}
+
+box, label, image, picture {
+    background-color: transparent;
+}
+
+/* panel buttons: rounded "pill" highlight on hover */
+
+#bar button {
+    background: transparent;
+    min-height: 0;
+    padding: 0 10px;
+    margin: 3px 1px;
+    border-radius: 999px;
+    font-weight: bold;
+    transition: background-color 150ms ease;
+}
+
+#bar button:hover {
+    background-color: var(--hover);
+}
+
+#bar button:active, #bar button:checked {
+    background-color: var(--active);
+}
+
+/* --- workspaces (activities indicator) --- */
+
+.workspaces {
+    padding: 0 6px;
+    margin: 3px 4px;
+    border-radius: 999px;
+}
+
+.workspaces:hover {
+    background-color: var(--hover);
+}
+
+#bar .workspaces .item {
+    min-width: 7px;
+    min-height: 7px;
+    padding: 0;
+    margin: 9px 3px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.5);
+    font-size: 0;
+    transition: min-width 250ms ease, background-color 250ms ease;
+}
+
+#bar .workspaces .item label {
+    font-size: 0;
+}
+
+#bar .workspaces .item:hover {
+    background-color: rgba(255, 255, 255, 0.75);
+}
+
+#bar .workspaces .item.focused {
+    min-width: 36px;
+    background-color: var(--panel-fg);
+}
+
+#bar .workspaces .item.urgent {
+    background-color: #f66151;
+}
+
+/* --- quick settings indicators --- */
+
+/* Adwaita's battery icons fill in orange or green; GNOME's top bar keeps them white */
+#bar .indicators picture,
+#bar popover .pill picture {
+    filter: grayscale(100%) brightness(400%);
+}
+
+/* custom widgets are wrapped in revealers */
+.indicators > box > revealer + revealer {
+    margin-left: 8px;
+}
+
+#bar button:focus {
+    outline: none;
+}
+
+/* GTK keeps focus on a panel button after its popup closes */
+#bar .indicators:focus:not(:hover),
+#bar .clock:focus:not(:hover) {
+    background-color: transparent;
+}
+
+.tray image {
+    -gtk-icon-style: symbolic;
+}
+
+/* --- popups (shared) --- */
+
+#bar popover {
+    background: transparent;
+}
+
+#bar popover contents {
+    background-color: var(--menu-bg);
+    border-radius: 24px;
+    border: 1px solid var(--menu-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    padding: 0;
+}
+
+.popup {
+    padding: 12px;
+}
+
+#bar popover button {
+    background-color: transparent;
+    border-radius: 999px;
+    padding: 0 12px;
+    min-height: 36px;
+}
+
+#bar popover button:hover {
+    background-color: var(--hover);
+}
+
+/* --- clock / calendar --- */
+
+.popup-clock {
+    padding: 18px;
+}
+
+.popup-clock .calendar-clock {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--dim);
+    margin-bottom: 8px;
+}
+
+.popup-clock .calendar {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+}
+
+.popup-clock .calendar header {
+    border: none;
+    background: transparent;
+}
+
+.popup-clock .calendar grid label {
+    min-width: 32px;
+    min-height: 32px;
+    border-radius: 999px;
+}
+
+.popup-clock .calendar grid label:hover {
+    background-color: var(--hover);
+}
+
+.popup-clock .calendar .today {
+    background-color: var(--accent);
+    font-weight: bold;
+}
+
+.popup-clock .calendar .day-name {
+    color: var(--dim);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.popup-clock .calendar .other-month {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* --- quick settings menu --- */
+
+#bar popover .qs-menu {
+    padding: 4px;
+    min-width: 360px;
+}
+
+#bar popover #top-row,
+#bar popover .slider-row {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+#bar popover #top-row {
+    margin-bottom: 14px;
+}
+
+/* row width 384px = 2 tiles (187px + 10px margins) - 10px outer margins;
+   spacer = 384 - battery pill (97px) - 3 round buttons, measured */
+#bar popover #spacer {
+    min-width: 153px;
+}
+
+#bar popover .pill,
+#bar popover .round {
+    background-color: var(--tile-bg);
+}
+
+#bar popover .pill:hover,
+#bar popover .round:hover {
+    background-color: var(--tile-hover);
+}
+
+/* fixed width (its size at "100%"), so the top row lines up at any charge */
+#bar popover .pill {
+    min-width: 73px;
+}
+
+#bar popover .pill picture {
+    margin-right: 6px;
+}
+
+/* sized by padding around the 16px icon, so the icon stays centred */
+#bar popover .round {
+    min-width: 0;
+    min-height: 0;
+    padding: 10px;
+    margin-left: 8px;
+}
+
+#bar popover .slider-row {
+    margin-bottom: 8px;
+}
+
+#bar popover .slider-row .round {
+    background-color: transparent;
+    margin: 0 6px 0 0;
+}
+
+#bar popover .slider-row .round:hover {
+    background-color: var(--hover);
+}
+
+scale {
+    padding: 12px 6px;
+}
+
+scale trough {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
+    min-height: 6px;
+}
+
+scale highlight {
+    background-color: var(--panel-fg);
+    border-radius: 999px;
+}
+
+scale slider {
+    background-color: var(--panel-fg);
+    min-width: 18px;
+    min-height: 18px;
+    margin: -7px;
+    border-radius: 999px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+#bar popover .tile-row {
+    margin-top: 10px;
+}
+
+#bar popover .tile {
+    background-color: var(--tile-bg);
+    border-radius: 999px;
+    min-width: 155px;
+    min-height: 48px;
+    padding: 0 16px;
+    margin: 0 5px;
+}
+
+#bar popover .tile:hover {
+    background-color: var(--tile-hover);
+}
+
+#bar popover .tile picture {
+    margin-right: 12px;
+}
+
+
+/* --- tray menus --- */
+
+.tray popover contents {
+    padding: 8px;
+}
+

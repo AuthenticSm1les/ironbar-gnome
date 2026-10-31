@@ -1,0 +1,199 @@
+let {
+    $has_battery = "ls /sys/class/power_supply/ | grep --quiet '^BAT'"
+
+    // --- start: GNOME 45+ workspace pills ---
+
+    $workspaces = {
+        type = "workspaces"
+        sort = "index"
+        format = " "
+    }
+
+    // --- center: date & time, calendar popup ---
+
+    $clock = {
+        type = "clock"
+        format = "%a %b %-d  %H:%M"
+        format_popup = "%A"
+        justify = "center"
+    }
+
+    // --- end: tray + quick settings ---
+
+    $tray = { type = "tray" }
+
+    // Toggle tiles: scripts/qs.sh sets their icon and label ironvars, and
+    // highlights active ones through a generated stylesheet (state.css).
+    // Labels take their whole markup from one ironvar, as a partly
+    // substituted string is invalid markup.
+
+    $wifi_tile = {
+        type = "button"
+        class = "tile wifi"
+        on_click = "!~/.config/ironbar/scripts/qs.sh wifi-toggle"
+        widgets = [
+            { type = "image" size = 16 src = "icon:#wifi_icon" }
+            { type = "label" justify = "left" label = "#wifi_markup" }
+        ]
+    }
+
+    $bt_tile = {
+        type = "button"
+        class = "tile bt"
+        on_click = "!~/.config/ironbar/scripts/qs.sh bt-toggle"
+        widgets = [
+            { type = "image" size = 16 src = "icon:#bt_icon" }
+            { type = "label" justify = "left" label = "#bt_markup" }
+        ]
+    }
+
+    $profile_tile = {
+        type = "button"
+        class = "tile profile"
+        on_click = "!~/.config/ironbar/scripts/qs.sh profile-cycle"
+        widgets = [
+            { type = "image" size = 16 src = "icon:#profile_icon" }
+            { type = "label" justify = "left" label = "#profile_markup" }
+        ]
+    }
+
+    $net_tile = {
+        type = "button"
+        class = "tile"
+        on_click = "!nm-connection-editor"
+        widgets = [
+            { type = "image" size = 16 src = "icon:network-wired-symbolic" }
+            { type = "label" justify = "left" label = "<b>Network</b>\n<span size='small' alpha='60%'>Settings</span>" }
+        ]
+    }
+
+    $quick_settings = {
+        type = "custom"
+        name = "quick-settings"
+        class = "quick-settings"
+
+        bar = [
+            // event listener feeding the ironvars below; prints nothing
+            { type = "label" name = "qs-daemon" label = "{{watch:~/.config/ironbar/scripts/qs.sh daemon}}" }
+            {
+                type = "button"
+                class = "indicators"
+                on_click = "popup:toggle"
+                widgets = [
+                    { type = "image" size = 16 src = "icon:#net_icon" }
+                    { type = "image" size = 16 src = "icon:#vol_icon" }
+                    { type = "image" size = 16 src = "icon:#bat_icon" show_if = $has_battery }
+                ]
+            }
+        ]
+
+        popup = [
+            {
+                type = "box"
+                class = "qs-menu"
+                orientation = "vertical"
+                widgets = [
+                    // top row: battery, lock, reboot, power off
+                    {
+                        type = "box"
+                        name = "top-row"
+                        widgets = [
+                            {
+                                type = "button"
+                                class = "pill"
+                                show_if = $has_battery
+                                widgets = [
+                                    { type = "image" size = 16 src = "icon:#bat_icon" }
+                                    { type = "label" label = "#bat_pct" }
+                                ]
+                            }
+                            { type = "box" name = "spacer" }
+                            {
+                                type = "button"
+                                class = "round"
+                                on_click = "!hyprlock"
+                                widgets = [ { type = "image" size = 16 src = "icon:system-lock-screen-symbolic" } ]
+                            }
+                            {
+                                type = "button"
+                                class = "round"
+                                on_click = "!systemctl reboot"
+                                widgets = [ { type = "image" size = 16 src = "icon:system-reboot-symbolic" } ]
+                            }
+                            {
+                                type = "button"
+                                class = "round"
+                                on_click = "!systemctl poweroff"
+                                widgets = [ { type = "image" size = 16 src = "icon:system-shutdown-symbolic" } ]
+                            }
+                        ]
+                    }
+
+                    // sliders: polled, as ironbar sliders can't read ironvars;
+                    // each poll is a single cat of a file the daemon keeps current
+                    {
+                        type = "box"
+                        class = "slider-row"
+                        widgets = [
+                            {
+                                type = "button"
+                                class = "round"
+                                on_click = "!wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+                                widgets = [ { type = "image" size = 16 src = "icon:#vol_icon" } ]
+                            }
+                            {
+                                type = "slider"
+                                length = 342
+                                step = 5
+                                show_label = false
+                                value = "500:cat ${XDG_RUNTIME_DIR}/ironbar-qs/vol"
+                                on_change = "!wpctl set-volume @DEFAULT_AUDIO_SINK@ ${0%.*}%"
+                            }
+                        ]
+                    }
+                    {
+                        type = "box"
+                        class = "slider-row"
+                        show_if = "ls /sys/class/backlight/ | grep --quiet ."
+                        widgets = [
+                            {
+                                type = "button"
+                                class = "round"
+                                widgets = [ { type = "image" size = 16 src = "icon:display-brightness-symbolic" } ]
+                            }
+                            {
+                                type = "slider"
+                                length = 342
+                                // raw sysfs values, as reading the file is the cheapest poll
+                                min = 75
+                                max = 7500
+                                step = 375
+                                show_label = false
+                                value = "500:cat /sys/class/backlight/intel_backlight/brightness"
+                                on_change = "!brightnessctl -q set ${0%.*}"
+                            }
+                        ]
+                    }
+
+                    // toggle tiles, two per row
+                    { type = "box" class = "tile-row" widgets = [ $wifi_tile $net_tile ] }
+                    { type = "box" class = "tile-row" widgets = [ $profile_tile $bt_tile ] }
+                ]
+            }
+        ]
+    }
+} in {
+    // --- bar ---
+
+    name = "main"
+    position = "top"
+    height = 32
+    icon_theme = "Adwaita"
+    popup_autohide = true
+
+    // --- layout ---
+
+    start = [ $workspaces ]
+    center = [ $clock ]
+    end = [ $tray $quick_settings ]
+}
