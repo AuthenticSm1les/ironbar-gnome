@@ -13,6 +13,9 @@
     --accent: #3584e4;
     --accent-hover: #4a90e8;
     --dim: rgba(255, 255, 255, 0.6);
+    --card-bg: #2e2e32;
+    --stack-1: #37373b;
+    --stack-2: #2d2d31;
 }
 
 * {
@@ -149,53 +152,215 @@ box, label, image, picture {
     background-color: var(--hover);
 }
 
-/* --- clock / calendar --- */
+/* --- date menu: notifications + calendar --- */
 
-.popup-clock {
-    padding: 18px;
+#bar .clock .dnd-ind {
+    margin-left: 8px;
 }
 
-.popup-clock .calendar-clock {
-    font-size: 13px;
-    font-weight: bold;
+#bar popover .dm-menu {
+    padding: 6px;
+}
+
+#bar popover .notif-col {
+    min-width: 360px;
+    margin-right: 12px;
+}
+
+#bar popover .notif-list {
+    min-height: 380px;
+}
+
+#bar popover .notif-empty {
+    margin-top: 130px;
+}
+
+#bar popover .notif-empty label {
     color: var(--dim);
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+#bar popover .notif-empty picture {
+    opacity: 0.4;
+}
+
+#bar popover .notif-slot {
     margin-bottom: 8px;
 }
 
-.popup-clock .calendar {
+#bar popover .notif {
+    background-color: var(--tile-bg);
+    border-radius: 12px;
+}
+
+/* the app's other notifications, peeking out under the top card */
+#bar popover .layer {
+    min-height: 7px;
+    border-radius: 0 0 10px 10px;
+}
+
+#bar popover .layer1 {
+    background-color: var(--stack-1);
+    margin: 0 8px;
+}
+
+#bar popover .layer2 {
+    background-color: var(--stack-2);
+    margin: 0 16px;
+}
+
+/* the body spans the card; the buttons overlay its top right corner */
+#bar popover button.notif-body {
     background-color: transparent;
-    border: none;
-    padding: 0;
+    border-radius: 12px;
+    padding: 10px 12px 12px;
+    min-width: 336px;
+    min-height: 0;
 }
 
-.popup-clock .calendar header {
-    border: none;
-    background: transparent;
+#bar popover button.notif-body:hover {
+    background-color: var(--tile-hover);
 }
 
-.popup-clock .calendar grid label {
-    min-width: 32px;
-    min-height: 32px;
+#bar popover .notif-body label {
+    font-weight: normal;
+}
+
+#bar popover .notif-head {
+    margin-bottom: 6px;
+}
+
+#bar popover .notif-head picture {
+    margin-right: 6px;
+    filter: grayscale(100%);
+    opacity: 0.7;
+}
+
+#bar popover .notif-icon {
+    margin-right: 12px;
     border-radius: 999px;
 }
 
-.popup-clock .calendar grid label:hover {
-    background-color: var(--hover);
+#bar popover .group-head {
+    margin: 0 4px 10px 6px;
 }
 
-.popup-clock .calendar .today {
-    background-color: var(--accent);
-    font-weight: bold;
+#bar popover .group-name {
+    min-width: 318px;
 }
 
-.popup-clock .calendar .day-name {
+#bar popover .notif-btns {
+    margin: 6px 6px 0 -64px;
+}
+
+#bar popover button.nbtn {
+    background-color: var(--tile-hover);
+    min-width: 0;
+    min-height: 0;
+    padding: 4px;
+    margin-left: 4px;
+}
+
+#bar popover button.nbtn:hover {
+    background-color: #55555a;
+}
+
+#bar popover .notif-footer {
+    min-height: 36px;
+    margin-top: 4px;
+}
+
+#bar popover button.clear {
+    background-color: var(--tile-bg);
+    padding: 0 16px;
+}
+
+#bar popover button.clear:hover {
+    background-color: var(--tile-hover);
+}
+
+/* calendar column */
+
+#bar popover .cal-col {
+    min-width: 280px;
+}
+
+#bar popover button.cal-date {
+    border-radius: 12px;
+    padding: 6px 10px;
+    margin-bottom: 4px;
+}
+
+#bar popover .cal-date label {
+    font-weight: normal;
+}
+
+#bar popover .cal-date .weekday {
     color: var(--dim);
-    font-size: 12px;
+    font-size: 13px;
+}
+
+#bar popover .cal-date .date {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+#bar popover .cal-grid {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    padding: 6px;
+}
+
+#bar popover .cal-nav {
+    margin-bottom: 4px;
+}
+
+#bar popover button.nav {
+    min-width: 0;
+    min-height: 0;
+    padding: 8px;
+}
+
+#bar popover .cal-nav .month {
+    min-width: 188px;
     font-weight: bold;
 }
 
-.popup-clock .calendar .other-month {
-    color: rgba(255, 255, 255, 0.3);
+#bar popover .cal-grid .dow {
+    min-width: 38px;
+    min-height: 26px;
+    font-size: 11px;
+    font-weight: bold;
+    color: var(--dim);
+}
+
+#bar popover .cal-grid .day {
+    min-width: 32px;
+    min-height: 32px;
+    margin: 1px 3px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: normal;
+    opacity: 0.35;
+}
+
+#bar popover .events {
+    min-width: 252px;
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-top: 8px;
+}
+
+#bar popover .events-title {
+    font-weight: bold;
+}
+
+#bar popover .events-none {
+    color: var(--dim);
+    font-style: italic;
+    margin-top: 4px;
 }
 
 /* --- quick settings menu --- */
