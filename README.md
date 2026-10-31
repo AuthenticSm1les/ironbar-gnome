@@ -2,6 +2,9 @@
 
 An [ironbar](https://github.com/JakeStanger/ironbar) config that mimics the GNOME Shell 51 top bar, for Hyprland.
 
+![Date menu](screenshots/date-menu.png)
+![Quick settings](screenshots/quick-settings.png)
+
 - Workspace pills on the left
 - Date and time in the centre, with an unread dot or a Do Not Disturb icon, opening GNOME's
   date menu: notifications on the left, one card per app with its other notifications as
