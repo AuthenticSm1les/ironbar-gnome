@@ -1,26 +1,42 @@
-/* GNOME Shell top bar replica */
+/* GNOME Shell 51 top bar replica.
+   Sizes and colours follow GNOME's own stylesheet (gnome-shell-dark.css):
+   1em there is the 11pt interface font, so e.g. 3em calendar days are 44px
+   of 0.818em text. */
 
 :root {
     --panel-bg: #000000;
     --panel-fg: #ffffff;
     --hover: rgba(255, 255, 255, 0.17);
-    --active: rgba(255, 255, 255, 0.25);
+    --active: rgba(255, 255, 255, 0.28);
 
-    --menu-bg: #222226;
-    --menu-border: rgba(255, 255, 255, 0.08);
-    --tile-bg: #3a3a3e;
-    --tile-hover: #47474c;
+    --menu-bg: #36363a;
+    --menu-border: #424247;
+    --button: #48484c;
+    --button-hover: #525256;
+    --card: #54545a;
+    --card-hover: #5b5b5f;
+    --stack-1: #45454a;
+    --stack-2: #3d3d42;
+    --round-on-card: #6d6d73;
+    --arrow: #5a5a5e;
     --accent: #3584e4;
-    --accent-hover: #4a90e8;
-    --dim: rgba(255, 255, 255, 0.6);
-    --card-bg: #2e2e32;
-    --stack-1: #37373b;
-    --stack-2: #2d2d31;
+    --accent-hover: #4a91e7;
+    --accent-arrow: #5396e8;
+    --accent-arrow-hover: #64a1eb;
+    /* the line between a tile and its arrow: 25% white over the menu,
+       or white mixed 30% into the accent */
+    --tile-separator: rgba(255, 255, 255, 0.25);
+    --accent-separator: #72a9ec;
+    --separator: rgba(255, 255, 255, 0.1);
+    --dim: #b2b2b4;
+    --weekend: #9b9b9d;
+    --other-month: rgba(255, 255, 255, 0.5);
+    --placeholder: rgba(255, 255, 255, 0.45);
 }
 
 * {
     font-family: "Adwaita Sans", "Cantarell", sans-serif;
-    font-size: 14.5px;
+    font-size: 11pt;
     color: var(--panel-fg);
     border: none;
     box-shadow: none;
@@ -41,7 +57,7 @@ box, label, image, picture {
 #bar button {
     background: transparent;
     min-height: 0;
-    padding: 0 10px;
+    padding: 0 12px;
     margin: 3px 1px;
     border-radius: 999px;
     font-weight: bold;
@@ -54,6 +70,16 @@ box, label, image, picture {
 
 #bar button:active, #bar button:checked {
     background-color: var(--active);
+}
+
+#bar button:focus {
+    outline: none;
+}
+
+/* GTK keeps focus on a panel button after its popup closes */
+#bar .indicators:focus:not(:hover),
+#bar .clock:focus:not(:hover) {
+    background-color: transparent;
 }
 
 /* --- workspaces (activities indicator) --- */
@@ -69,10 +95,10 @@ box, label, image, picture {
 }
 
 #bar .workspaces .item {
-    min-width: 7px;
-    min-height: 7px;
+    min-width: 8px;
+    min-height: 8px;
     padding: 0;
-    margin: 9px 3px;
+    margin: 9px 2px;
     border-radius: 999px;
     background-color: rgba(255, 255, 255, 0.5);
     font-size: 0;
@@ -96,7 +122,11 @@ box, label, image, picture {
     background-color: #f66151;
 }
 
-/* --- quick settings indicators --- */
+/* --- clock and status indicators --- */
+
+#bar .clock .clock-ind {
+    margin-left: 6px;
+}
 
 /* Adwaita's battery icons fill in orange or green; GNOME's top bar keeps them white */
 #bar .indicators picture,
@@ -107,16 +137,6 @@ box, label, image, picture {
 /* custom widgets are wrapped in revealers */
 .indicators > box > revealer + revealer {
     margin-left: 8px;
-}
-
-#bar button:focus {
-    outline: none;
-}
-
-/* GTK keeps focus on a panel button after its popup closes */
-#bar .indicators:focus:not(:hover),
-#bar .clock:focus:not(:hover) {
-    background-color: transparent;
 }
 
 .tray image {
@@ -131,21 +151,26 @@ box, label, image, picture {
 
 #bar popover contents {
     background-color: var(--menu-bg);
-    border-radius: 24px;
+    border-radius: 30px;
     border: 1px solid var(--menu-border);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     padding: 0;
 }
 
+#bar .quick-settings popover contents {
+    border-radius: 36px;
+}
+
 .popup {
-    padding: 12px;
+    padding: 0;
 }
 
 #bar popover button {
     background-color: transparent;
     border-radius: 999px;
     padding: 0 12px;
-    min-height: 36px;
+    min-height: 0;
+    font-weight: normal;
 }
 
 #bar popover button:hover {
@@ -154,81 +179,81 @@ box, label, image, picture {
 
 /* --- date menu: notifications + calendar --- */
 
-#bar .clock .dnd-ind {
-    margin-left: 8px;
-}
-
 #bar popover .dm-menu {
-    padding: 6px;
+    padding: 10px;
 }
 
+/* GNOME's message list: 29em wide, with a line between it and the calendar */
 #bar popover .notif-col {
-    min-width: 360px;
-    margin-right: 12px;
+    min-width: 412px;
+    padding-right: 12px;
+    margin-right: 4px;
+    border-right: 1px solid var(--separator);
 }
 
 #bar popover .notif-list {
-    min-height: 380px;
+    min-height: 372px;
 }
 
 #bar popover .notif-empty {
-    margin-top: 130px;
-}
-
-#bar popover .notif-empty label {
-    color: var(--dim);
-    font-weight: bold;
-    margin-top: 10px;
+    margin-top: 96px;
 }
 
 #bar popover .notif-empty picture {
-    opacity: 0.4;
+    opacity: 0.45;
+    margin-bottom: 12px;
+}
+
+#bar popover .notif-empty label {
+    color: var(--placeholder);
+    font-weight: bold;
+    font-size: 15pt;
 }
 
 #bar popover .notif-slot {
-    margin-bottom: 8px;
+    margin-bottom: 12px;
 }
 
 #bar popover .notif {
-    background-color: var(--tile-bg);
-    border-radius: 12px;
+    background-color: var(--card);
+    border-radius: 18px;
 }
 
 /* the app's other notifications, peeking out under the top card */
 #bar popover .layer {
     min-height: 7px;
-    border-radius: 0 0 10px 10px;
+    border-radius: 0 0 14px 14px;
 }
 
 #bar popover .layer1 {
     background-color: var(--stack-1);
-    margin: 0 8px;
+    margin: 0 10px;
 }
 
 #bar popover .layer2 {
     background-color: var(--stack-2);
-    margin: 0 16px;
+    margin: 0 20px;
 }
 
 /* the body spans the card; the buttons overlay its top right corner */
 #bar popover button.notif-body {
     background-color: transparent;
-    border-radius: 12px;
-    padding: 10px 12px 12px;
-    min-width: 336px;
-    min-height: 0;
+    border-radius: 18px;
+    padding: 6px;
+    min-width: 400px;
 }
 
 #bar popover button.notif-body:hover {
-    background-color: var(--tile-hover);
-}
-
-#bar popover .notif-body label {
-    font-weight: normal;
+    background-color: var(--card-hover);
 }
 
 #bar popover .notif-head {
-    margin-bottom: 6px;
+    min-height: 24px;
+    padding: 0 6px 6px;
+}
+
+#bar popover .notif-head label {
+    color: var(--dim);
 }
 
 #bar popover .notif-head picture {
@@ -237,168 +262,146 @@ box, label, image, picture {
     opacity: 0.7;
 }
 
+#bar popover .notif-content {
+    padding: 6px;
+}
+
 #bar popover .notif-icon {
     margin-right: 12px;
-    border-radius: 999px;
-}
-
-#bar popover .group-head {
-    margin: 0 4px 10px 6px;
-}
-
-#bar popover .group-name {
-    min-width: 318px;
 }
 
 #bar popover .notif-btns {
-    margin: 6px 6px 0 -64px;
+    margin: 6px 6px 0 -76px;
 }
 
 #bar popover button.nbtn {
-    background-color: var(--tile-hover);
+    background-color: var(--round-on-card);
     min-width: 0;
-    min-height: 0;
-    padding: 4px;
-    margin-left: 4px;
+    padding: 6px;
+    margin-left: 6px;
 }
 
 #bar popover button.nbtn:hover {
-    background-color: #55555a;
+    background-color: #78787e;
+}
+
+#bar popover .group-head {
+    padding: 6px;
+    margin-bottom: 6px;
+}
+
+#bar popover .group-name {
+    min-width: 360px;
+    margin: 0 4px;
+}
+
+#bar popover button.nbtn.collapse {
+    background-color: rgba(255, 255, 255, 0.2);
+    padding: 4px;
 }
 
 #bar popover .notif-footer {
-    min-height: 36px;
-    margin-top: 4px;
+    min-height: 34px;
+    padding: 6px 0 2px;
 }
 
 #bar popover button.clear {
-    background-color: var(--tile-bg);
-    padding: 0 16px;
+    background-color: var(--button);
+    font-weight: bold;
+    padding: 3px 24px;
 }
 
 #bar popover button.clear:hover {
-    background-color: var(--tile-hover);
+    background-color: var(--button-hover);
 }
 
 /* calendar column */
 
 #bar popover .cal-col {
-    min-width: 280px;
+    margin-left: 6px;
 }
 
 #bar popover button.cal-date {
     border-radius: 12px;
-    padding: 6px 10px;
-    margin-bottom: 4px;
-}
-
-#bar popover .cal-date label {
-    font-weight: normal;
+    padding: 9px;
+    margin: 4px 4px 6px;
 }
 
 #bar popover .cal-date .weekday {
+    font-weight: bold;
     color: var(--dim);
-    font-size: 13px;
 }
 
 #bar popover .cal-date .date {
-    font-weight: bold;
-    font-size: 16px;
-}
-
-#bar popover .cal-grid {
-    background-color: var(--card-bg);
-    border-radius: 12px;
-    padding: 6px;
+    font-weight: 800;
+    font-size: 15pt;
 }
 
 #bar popover .cal-nav {
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 #bar popover button.nav {
-    min-width: 0;
-    min-height: 0;
-    padding: 8px;
+    min-width: 38px;
+    min-height: 38px;
+    padding: 0;
 }
 
 #bar popover .cal-nav .month {
-    min-width: 188px;
+    min-width: 204px;
     font-weight: bold;
 }
 
 #bar popover .cal-grid .dow {
-    min-width: 38px;
+    min-width: 40px;
     min-height: 26px;
-    font-size: 11px;
+    font-size: 9pt;
     font-weight: bold;
-    color: var(--dim);
+    color: var(--weekend);
 }
 
+/* current-month days are restyled from state.css */
 #bar popover .cal-grid .day {
-    min-width: 32px;
-    min-height: 32px;
-    margin: 1px 3px;
+    min-width: 36px;
+    min-height: 36px;
+    margin: 2px;
     border-radius: 999px;
-    font-size: 13px;
+    font-size: 9pt;
     font-weight: normal;
-    opacity: 0.35;
-}
-
-#bar popover .events {
-    min-width: 252px;
-    background-color: var(--card-bg);
-    border-radius: 12px;
-    padding: 12px 14px;
-    margin-top: 8px;
-}
-
-#bar popover .events-title {
-    font-weight: bold;
-}
-
-#bar popover .events-none {
-    color: var(--dim);
-    font-style: italic;
-    margin-top: 4px;
+    color: var(--other-month);
 }
 
 /* --- quick settings menu --- */
 
 #bar popover .qs-menu {
-    padding: 4px;
-    min-width: 360px;
-}
-
-#bar popover #top-row,
-#bar popover .slider-row {
-    margin-left: 5px;
-    margin-right: 5px;
+    padding: 18px;
 }
 
 #bar popover #top-row {
-    margin-bottom: 14px;
+    margin-bottom: 7px;
 }
 
-/* row width 384px = 2 tiles (187px + 10px margins) - 10px outer margins;
-   spacer = 384 - battery pill (97px) - 3 round buttons, measured */
+/* menu width 400px = 2 tiles (176px) + 12px gap + padding;
+   spacer = 364px - battery pill - 2 round buttons and their gaps */
 #bar popover #spacer {
-    min-width: 153px;
+    min-width: 172px;
 }
 
 #bar popover .pill,
 #bar popover .round {
-    background-color: var(--tile-bg);
+    background-color: var(--button);
+    font-weight: bold;
 }
 
 #bar popover .pill:hover,
 #bar popover .round:hover {
-    background-color: var(--tile-hover);
+    background-color: var(--button-hover);
 }
 
 /* fixed width (its size at "100%"), so the top row lines up at any charge */
 #bar popover .pill {
-    min-width: 73px;
+    min-width: 57px;
+    padding: 0 14px;
 }
 
 #bar popover .pill picture {
@@ -408,13 +411,12 @@ box, label, image, picture {
 /* sized by padding around the 16px icon, so the icon stays centred */
 #bar popover .round {
     min-width: 0;
-    min-height: 0;
-    padding: 10px;
-    margin-left: 8px;
+    padding: 10.5px;
+    margin-left: 12px;
 }
 
 #bar popover .slider-row {
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 #bar popover .slider-row .round {
@@ -426,55 +428,170 @@ box, label, image, picture {
     background-color: var(--hover);
 }
 
-scale {
-    padding: 12px 6px;
+/* the knob stays inside the trough, as in GNOME */
+#bar popover scale {
+    padding: 12px 0;
 }
 
-scale trough {
-    background-color: rgba(255, 255, 255, 0.15);
+#bar popover scale trough {
+    background-color: var(--separator);
     border-radius: 999px;
-    min-height: 6px;
+    min-height: 4px;
 }
 
-scale highlight {
-    background-color: var(--panel-fg);
+#bar popover scale highlight {
+    background-color: var(--accent);
     border-radius: 999px;
 }
 
-scale slider {
-    background-color: var(--panel-fg);
-    min-width: 18px;
-    min-height: 18px;
+#bar popover scale slider {
+    background-color: #e8e8e8;
+    background-image: none;
+    border: none;
+    outline: none;
+    min-width: 17px;
+    min-height: 17px;
     margin: -7px;
     border-radius: 999px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 #bar popover .tile-row {
-    margin-top: 10px;
+    margin-top: 5px;
 }
 
-#bar popover .tile {
-    background-color: var(--tile-bg);
-    border-radius: 999px;
-    min-width: 155px;
+#bar popover .tile-row.first {
+    margin-top: 2px;
+}
+
+#bar popover .tile-row > revealer + revealer {
+    margin-left: 10px;
+}
+
+/* a tile is a toggle, plus an arrow when it has a menu: 12em x 3.273em */
+#bar popover .qtile button {
+    background-color: var(--button);
+    margin-left: 0;
+    margin-right: 0;
     min-height: 48px;
-    padding: 0 16px;
-    margin: 0 5px;
+    font-weight: normal;
 }
 
-#bar popover .tile:hover {
-    background-color: var(--tile-hover);
+#bar popover .qtile button:hover {
+    background-color: var(--button-hover);
 }
 
-#bar popover .tile picture {
+#bar popover .qtile button.main {
+    border-radius: 999px 0 0 999px;
+    min-width: 117px;
+    padding: 0 9px 0 15px;
+}
+
+#bar popover .qtile button.main.solo {
+    border-radius: 999px;
+    min-width: 139px;
+    padding: 0 24px 0 15px;
+}
+
+#bar popover .qtile button.arrow {
+    border-radius: 0 999px 999px 0;
+    background-color: var(--arrow);
+    background-clip: padding-box;
+    border-left: 1px solid var(--tile-separator);
+    padding: 0 10px 0 9px;
+}
+
+#bar popover .qtile button.arrow:hover {
+    background-color: #646468;
+}
+
+#bar popover .qtile button.main picture {
+    margin-right: 9px;
+}
+
+/* --- quick settings submenus: power, power mode, keyboard --- */
+
+#bar popover .submenu {
+    background-color: var(--button);
+    border-radius: 24px;
+    padding: 12px;
+    margin-top: 12px;
+}
+
+#bar popover .sub-head {
+    margin-bottom: 12px;
+}
+
+#bar popover .sub-icon {
+    background-color: var(--round-on-card);
+    border-radius: 999px;
+    padding: 9px;
     margin-right: 12px;
 }
 
+#bar popover .sub-icon.accent {
+    background-color: var(--accent);
+}
+
+#bar popover .sub-title {
+    font-weight: bold;
+    font-size: 15pt;
+}
+
+#bar popover .submenu button.item,
+#bar popover .submenu button.pick {
+    border-radius: 12px;
+    min-height: 40px;
+    padding: 0 12px;
+}
+
+#bar popover .submenu button.item:hover,
+#bar popover .submenu button.pick:hover {
+    background-color: var(--card-hover);
+}
+
+#bar popover .submenu .pick picture {
+    margin-right: 6px;
+}
+
+#bar popover .submenu .pick .check {
+    margin-left: 6px;
+    opacity: 0;
+}
+
+#bar popover .submenu .separator {
+    min-height: 1px;
+    background-color: var(--separator);
+    margin: 6px 12px;
+}
+
+#bar popover .kbd-menu {
+    padding: 18px 12px;
+}
+
+#bar popover .kbd-menu button.level {
+    background-color: transparent;
+    min-width: 108px;
+    padding: 0;
+}
+
+#bar popover .kbd-menu button.level:hover {
+    background-color: transparent;
+}
+
+#bar popover .kbd-menu .level-icon {
+    border-radius: 999px;
+    min-height: 36px;
+    margin: 0 4px 6px;
+    padding: 0 40px;
+}
+
+#bar popover .kbd-menu button.level:hover .level-icon {
+    background-color: var(--card-hover);
+}
 
 /* --- tray menus --- */
 
 .tray popover contents {
     padding: 8px;
 }
-

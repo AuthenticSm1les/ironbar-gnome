@@ -15,6 +15,7 @@ cache="${XDG_RUNTIME_DIR:-/tmp}/ironbar-qs"
 sep=$'\x1f'
 
 sock="${XDG_RUNTIME_DIR:-/tmp}/ironbar-ipc.sock"
+state="${XDG_STATE_HOME:-$HOME/.local/state}/ironbar-gnome"
 
 # Only sends changed values, as every update makes ironbar re-render.
 # The cache is shared between the daemon and the click handlers.
@@ -52,22 +53,37 @@ sel() {
 
 write_state() {
     local css="" tile days
-    for tile in wifi bt profile dnd; do
+    for tile in wired wifi bt profile night dnd kbd airplane; do
         is_active $tile || continue
-        css+="#bar popover button.tile.$tile { background-color: var(--accent); }
-#bar popover button.tile.$tile:hover { background-color: var(--accent-hover); }
+        css+="#bar popover .qtile.$tile button { background-color: var(--accent); }
+#bar popover .qtile.$tile button:hover { background-color: var(--accent-hover); }
+#bar popover .qtile.$tile button.arrow { background-color: var(--accent-arrow); border-left-color: var(--accent-separator); }
+#bar popover .qtile.$tile button.arrow:hover { background-color: var(--accent-arrow-hover); }
 "
     done
+    get menu_profile_sel
+    [ -n "$REPLY" ] && css+="#bar popover .submenu .pick.$REPLY .check { opacity: 1; }
+"
+    get kbd_level
+    [ -n "$REPLY" ] && css+="#bar popover .kbd-menu .level.l$REPLY .level-icon { background-color: var(--card-hover); }
+"
+    # like GNOME, an open submenu dims the rest of the menu
+    get menu_open
+    [ -n "$REPLY" ] && css+="#bar popover .qs-menu > revealer > box:not(.submenu) { opacity: 0.5; }
+"
     # calendar: days of the shown month stand out (weekends a bit less),
     # today is a blue circle
     get cal_days; days=$REPLY
-    [ -n "$days" ] && css+="$(sel "$days") { font-weight: bold; opacity: 1; }
+    [ -n "$days" ] && css+="$(sel "$days") { font-weight: bold; color: var(--panel-fg); }
 "
     get cal_we; days=$REPLY
-    [ -n "$days" ] && css+="$(sel "$days") { opacity: 0.6; }
+    [ -n "$days" ] && css+="$(sel "$days") { font-weight: bold; color: var(--weekend); }
+"
+    get ws_focused
+    [ -n "$REPLY" ] && css+="#bar .workspaces .item.w$REPLY { min-width: 36px; background-color: var(--panel-fg); }
 "
     get cal_today
-    [ -n "$REPLY" ] && css+="#bar popover .cal-grid .day.$REPLY { background-color: var(--accent); font-weight: bold; opacity: 1; }
+    [ -n "$REPLY" ] && css+="#bar popover .cal-grid .day.$REPLY { background-color: var(--accent); font-weight: bold; color: var(--panel-fg); }
 "
     printf '%s' "$css" >"$cache/state.css"
 }
@@ -90,27 +106,22 @@ escape() {
     REPLY=${REPLY//>/&gt;}
 }
 
-# tile_markup <title> <subtitle> <active>; result in $markup
+# tile_markup <title> [subtitle]; result in $markup
 tile_markup() {
     local title
     escape "$1"; title=$REPLY
-    if [ "$3" = 1 ]; then
-        markup="<b>$title</b>
-<span size='small'>$2</span>"
-    else
-        markup="<b>$title</b>
-<span size='small' alpha='60%'>$2</span>"
-    fi
+    markup="<span weight='bold'>$title</span>"
+    [ -n "$2" ] && { escape "$2"; markup+=$'\n'"<span size='small'>$REPLY</span>"; }
 }
 
 # --- quick settings ---
 
 show_wifi() {
     if [ "$1" = 1 ]; then
-        tile_markup "$2" On 1
+        tile_markup Wi-Fi "$2"
     else
         set_var wifi_icon network-wireless-disabled-symbolic
-        tile_markup Wi-Fi Off 0
+        tile_markup Wi-Fi
     fi
     set_var wifi_markup "$markup"
     set_active wifi "$1"
@@ -119,10 +130,10 @@ show_wifi() {
 show_bt() {
     if [ "$1" = 1 ]; then
         set_var bt_icon bluetooth-active-symbolic
-        tile_markup Bluetooth On 1
+        tile_markup Bluetooth "$2"
     else
         set_var bt_icon bluetooth-disabled-symbolic
-        tile_markup Bluetooth Off 0
+        tile_markup Bluetooth
     fi
     set_var bt_markup "$markup"
     set_active bt "$1"
@@ -130,15 +141,10 @@ show_bt() {
 
 show_dnd() {
     if [ "$1" = 1 ]; then
-        set_var dnd_icon notifications-disabled-symbolic
-        tile_markup "Do Not Disturb" On 1
         set_var dnd_on true
     else
-        set_var dnd_icon preferences-system-notifications-symbolic
-        tile_markup "Do Not Disturb" Off 0
         set_var dnd_on false
     fi
-    set_var dnd_markup "$markup"
     set_active dnd "$1"
     update_clock
 }
@@ -150,13 +156,16 @@ show_profile() {
     power-saver) label="Power Saver" ;;
     *) label=Balanced ;;
     esac
-    # GNOME highlights the tile when not on the default profile
+    # GNOME highlights the tile, and shows the profile in the bar,
+    # when not on the default profile
     [ "$1" = balanced ] && active=0
-    tile_markup "Power Mode" "$label" $active
+    tile_markup "Power Mode" "$label"
     set_var profile "$1"
     set_var profile_icon "power-profile-$1-symbolic"
     set_var profile_markup "$markup"
+    set_var profile_bar "$( ((active)) && echo true || echo false)"
     set_active profile $active
+    set_state menu_profile_sel "$1"
 }
 
 update_net() {
@@ -172,16 +181,19 @@ update_net() {
         else icon=network-wireless-signal-weak-symbolic
         fi
         set_var wifi_icon "$icon"
-        show_wifi 1 "${ssid:-Wi-Fi}"
+        show_wifi 1 "$ssid"
     else
         icon=network-wireless-disabled-symbolic
         show_wifi 0
     fi
     if [[ $devs == *ethernet:connected:* ]]; then
         set_var net_icon network-wired-symbolic
+        set_active wired 1
     else
         set_var net_icon "$icon"
+        set_active wired 0
     fi
+    [[ $devs == *ethernet:* ]] && set_var wired_show true || set_var wired_show false
 }
 
 update_vol() {
@@ -230,20 +242,136 @@ update_profile() {
 }
 
 update_bt() {
-    [[ $(rfkill list bluetooth) == *"Soft blocked: no"* ]] && show_bt 1 || show_bt 0
+    local rf dev
+    rf=$(rfkill list)
+    if [[ $(rfkill list bluetooth) == *"Soft blocked: no"* ]]; then
+        # GNOME names the connected device, if there is one
+        dev=$(bluetoothctl devices Connected 2>/dev/null | head -n1)
+        dev=${dev#Device * }
+        [[ $dev == Device* ]] && dev=
+        show_bt 1 "$dev"
+    else
+        show_bt 0
+    fi
+    # Airplane Mode: every radio is off
+    if [[ $rf == *"Soft blocked: no"* ]]; then set_active airplane 0; else set_active airplane 1; fi
+}
+
+# --- tiles GNOME adds: Night Light, Keyboard ---
+
+kbd=$(echo /sys/class/leds/*kbd_backlight 2>/dev/null)
+[ -d "$kbd" ] || kbd=
+
+# The Night Light temperature, kept across restarts; the slider polls a copy
+# in the cache.
+night_temp() {
+    local file="$state/night-temp"
+    if [ -s "$file" ]; then
+        REPLY=$(<"$file")
+    else
+        REPLY=$(gsettings get org.gnome.settings-daemon.plugins.color night-light-temperature 2>/dev/null)
+        REPLY=${REPLY#uint32 }
+        REPLY=${REPLY:-2700}
+    fi
+}
+
+update_night() {
+    if pgrep -x hyprsunset >/dev/null; then
+        set_active night 1
+        set_var night_on true
+    else
+        set_active night 0
+        set_var night_on false
+    fi
+    night_temp
+    printf '%s' "$REPLY" >"$cache/night_temp"
+}
+
+
+update_kbd() {
+    [ -n "$kbd" ] || return
+    local level=$(<"$kbd/brightness")
+    ((level > 0)) && set_active kbd 1 || set_active kbd 0
+    set_state kbd_level "$level"
+}
+
+# GNOME's own icons (screenshot, the unread dot...) ship inside
+# gnome-shell. If it's installed they're copied once into the user's icon
+# theme, so they stay after it's removed (and get recoloured like any
+# symbolic icon); without them the closest Adwaita icons are used.
+load_icons() {
+    local res=/usr/share/gnome-shell/gnome-shell-icons.gresource name fallback list= path
+    local dir="${XDG_DATA_HOME:-$HOME/.local/share}/icons/hicolor/scalable/status"
+    mkdir -p "$dir"
+    while read -r name fallback; do
+        if [ ! -s "$dir/$name.svg" ] && [ -f "$res" ]; then
+            [ -n "$list" ] || list=$(gresource list "$res")
+            path=$(grep -m1 "/$name.svg\$" <<<"$list") &&
+                gresource extract "$res" "$path" >"$dir/$name.svg" 2>/dev/null
+        fi
+        if [ -s "$dir/$name.svg" ]; then
+            set_var "icon_${name//-/_}" "icon:$name"
+        else
+            rm -f "$dir/$name.svg"
+            set_var "icon_${name//-/_}" "icon:$fallback"
+        fi
+    done <<'ICONS'
+keyboard-brightness-off-symbolic keyboard-brightness-symbolic
+keyboard-brightness-medium-symbolic keyboard-brightness-symbolic
+keyboard-brightness-high-symbolic keyboard-brightness-symbolic
+screenshooter-symbolic camera-photo-symbolic
+message-indicator-symbolic mail-unread-symbolic
+no-notifications-symbolic preferences-system-notifications-symbolic
+notification-expand-symbolic pan-down-symbolic
+group-collapse-symbolic pan-up-symbolic
+ICONS
+}
+
+# --- workspaces ---
+
+# A dot per workspace (up to 10), in order; ws<N> holds dot N's workspace id.
+update_ws() {
+    local id active n=0 focused=""
+    active=$(hyprctl -j activeworkspace | jq -r .id)
+    for id in $(hyprctl -j workspaces | jq -r '[.[] | select(.id > 0) | .id] | sort | .[]'); do
+        ((++n > 10)) && break
+        printf '%s' "$id" >"$cache/ws$n"
+        set_var "ws${n}_show" true
+        [ "$id" = "$active" ] && focused=$n
+    done
+    for ((n = n + 1; n <= 10; n++)); do set_var "ws${n}_show" false; done
+    set_state ws_focused "$focused"
 }
 
 # --- date menu: clock, notifications, calendar ---
 
-# GNOME's default clock: no weekday, then the unread dot or the
-# Do Not Disturb icon (an image in the config, shown through dnd_on)
+# The clock follows GNOME's clock settings (12/24h, weekday, seconds), read
+# once at start; the unread dot and Do Not Disturb icon are images beside it.
+clock_format() {
+    local s=org.gnome.desktop.interface fmt="%b %-d  "
+    [ "$(gsettings get $s clock-show-weekday 2>/dev/null)" = true ] && fmt="%a $fmt"
+    [ "$(gsettings get $s clock-show-date 2>/dev/null)" = false ] && fmt=
+    if [ "$(gsettings get $s clock-format 2>/dev/null)" = "'12h'" ]; then
+        [ "$(gsettings get $s clock-show-seconds 2>/dev/null)" = true ] && fmt+="%-I:%M:%S %p" || fmt+="%-I:%M %p"
+    else
+        [ "$(gsettings get $s clock-show-seconds 2>/dev/null)" = true ] && fmt+="%H:%M:%S" || fmt+="%H:%M"
+    fi
+    printf '%s' "$fmt" >"$cache/clock_fmt"
+}
+
 update_clock() {
     local now
-    printf -v now '%(%b %-d  %H:%M)T' -1
-    if [ -f "$cache/unread" ] && ! is_active dnd; then
-        now+="  <span size='x-small'>●</span>"
-    fi
+    get clock_fmt
+    printf -v now "%(${REPLY:-%b %-d  %H:%M})T" -1
     set_var clock_markup "$now"
+    # only while the list has something: some notifications never reach
+    # dunst's history (transient ones, or ones their app closes)
+    get n_any
+    if [ -f "$cache/unseen" ] && [ "$REPLY" = true ] && ! is_active dnd; then
+        set_var unread true
+    else
+        set_var unread false
+    fi
 }
 
 # Month grid as 42 day labels (c1..c42); their emphasis comes from state.css.
@@ -264,7 +392,10 @@ update_calendar() {
     set_var cal_month "$month"
     set_var cal_weekday "$(printf '%(%A)T' -1)"
     set_var cal_date "$(printf '%(%B %-d %Y)T' -1)"
-    for ((i = 0; i < 7; i++)); do set_var "cal_h$((i + 1))" "${names[(i + start) % 7]}" & done
+    # in parallel; waits only for these, as the daemon also has its listeners
+    # as children, which never exit
+    local -a jobs=()
+    for ((i = 0; i < 7; i++)); do set_var "cal_h$((i + 1))" "${names[(i + start) % 7]}" & jobs+=($!); done
 
     local current="" weekend="" wd
     for ((c = 1; c <= 42; c++)); do
@@ -276,9 +407,9 @@ update_calendar() {
             ((wd == 0 || wd == 6)) && weekend+=" c$c" || current+=" c$c"
         fi
         printf -v day '%02d' "$day"
-        set_var "c$c" "$day" &
+        set_var "c$c" "$day" & jobs+=($!)
     done
-    wait
+    wait "${jobs[@]}"
     printf '%s' "${weekend# }" >"$cache/cal_we"
     set_state cal_days "${current# }"
     if ((offset == 0)); then
@@ -311,48 +442,74 @@ truncate() {
 
 # All notifications, newest first: the ones still on screen (tracked from
 # D-Bus, as dunst's history only gets them once closed) plus the history.
-# One line each: epoch, id, app, summary, body, icon.
+# One line each: epoch, id, app, summary, body, icon, desktop entry.
 list_notifs() {
     local up now_us
     read -r up _ </proc/uptime
     now_us=$((10#${up/./} * 10000))
     {
-        [ -f "$cache/displayed" ] && awk -F"$sep" -v OFS="$sep" '{ print $6, $1, $2, $3, $4, $5 }' "$cache/displayed"
+        [ -f "$cache/displayed" ] && awk -F"$sep" -v OFS="$sep" '{ print $6, $1, $2, $3, $4, $5, $7 }' "$cache/displayed"
         dunstctl history | jq -r --argjson now "$now_us" --argjson epoch "$EPOCHSECONDS" \
-            '.data[0][] | [($epoch - (($now - .timestamp.data) / 1000000 | floor)), .id.data, .appname.data, .summary.data, .body.data, .icon_path.data] | map(tostring | gsub("[\n\t\u001f]"; " ")) | join("\u001f")'
+            '.data[0][] | [($epoch - (($now - .timestamp.data) / 1000000 | floor)), .id.data, .appname.data, .summary.data, .body.data, .icon_path.data, (.desktop_entry.data // "")] | map(tostring | gsub("[\n\t\u001f]"; " ")) | join("\u001f")'
     } | sort -t"$sep" -k1,1nr -k2,2nr
 }
 
-# app_icon <app name>; the icon of its .desktop file in $REPLY, or nothing.
-# Looked up once per app, as GNOME shows the app's icon in each card's header.
+# app_icon <desktop entry>; its icon in $REPLY, or GNOME's generic one.
+# GNOME shows it in each card's header, and only knows the app from that hint.
 app_icon() {
-    local line f
-    if [ -f "$cache/appicons" ]; then
-        while IFS=$sep read -r f line; do
-            [ "$f" = "$1" ] && { REPLY=$line; return; }
-        done <"$cache/appicons"
+    local f
+    REPLY=application-x-executable-symbolic
+    [ -n "$1" ] || return
+    for f in ~/.local/share/applications/"$1".desktop /usr/share/applications/"$1".desktop; do
+        [ -f "$f" ] || continue
+        f=$(grep -m1 '^Icon=' "$f")
+        [ -n "${f#Icon=}" ] && REPLY=${f#Icon=}
+        return
+    done
+}
+
+# desktop_entry <desktop-entry hint> <app name>; in $REPLY. Apps that send no
+# hint (Electron ones, like Claude) are found by the Name= of their .desktop
+# file, as GNOME finds them by their window. Empty if there's none.
+declare -A de_of
+desktop_entry() {
+    REPLY=$1
+    [ -n "$REPLY" ] || [ -z "$2" ] && return
+    if [ -z "${de_of[$2]+set}" ]; then
+        local f
+        f=$(grep -lxF "Name=$2" ~/.local/share/applications/*.desktop /usr/share/applications/*.desktop 2>/dev/null | head -1)
+        f=${f##*/}
+        de_of[$2]=${f%.desktop}
     fi
-    REPLY=
-    f=$(grep -lisxF -m1 "Name=$1" /usr/share/applications/*.desktop ~/.local/share/applications/*.desktop 2>/dev/null | head -n1)
-    [ -n "$f" ] && { REPLY=$(grep -m1 '^Icon=' "$f"); REPLY=${REPLY#Icon=}; }
-    printf '%s\n' "$1$sep$REPLY" >>"$cache/appicons"
+    REPLY=${de_of[$2]}
+}
+
+# group_key <desktop entry> <id> <app name>; in $REPLY. Like GNOME,
+# notifications are grouped by their app; ones from no known app are grouped
+# by the name they give, except notify-send's, which each stand alone.
+group_key() {
+    desktop_entry "$1" "$3"
+    if [ -n "$REPLY" ]; then REPLY="app:$REPLY"
+    elif [ -n "$3" ] && [ "$3" != notify-send ]; then REPLY="name:$3"
+    else REPLY="id:$2"
+    fi
 }
 
 # Fills the five slots, GNOME 48+ style. Each app is one card, stacked when
 # it has more; expanding a stack shows only that app, under a header with its
 # name. A card's own expand button shows its whole text.
 update_notifs() {
-    local epoch id app summary body icon slot=0 expanded open n
-    local -A count newest
+    local epoch id app summary body icon de slot=0 expanded open n key
+    local -A count newest name
     local -a order lines
     get expanded; expanded=$REPLY
     get open; open=$REPLY
     mapfile -t lines < <(list_notifs)
     for line in "${lines[@]}"; do
-        IFS=$sep read -r epoch id app summary body icon <<<"$line"
-        app=${app:-Notification}
-        [ -z "${count[$app]}" ] && { order+=("$app"); newest[$app]=$line; }
-        count[$app]=$(( ${count[$app]:-0} + 1 ))
+        IFS=$sep read -r epoch id app summary body icon de <<<"$line"
+        group_key "$de" "$id" "$app"; key=$REPLY
+        [ -z "${count[$key]}" ] && { order+=("$key"); newest[$key]=$line; name[$key]=${app:-Notification}; }
+        count[$key]=$(( ${count[$key]:-0} + 1 ))
     done
     [ -n "$expanded" ] && ((${count[$expanded]:-0} > 1)) || expanded=
 
@@ -360,12 +517,11 @@ update_notifs() {
         ((slot >= 5)) && return
         ((++slot))
         local text when full more=false less=false
-        IFS=$sep read -r epoch id app summary body icon <<<"$1"
-        app=${app:-Notification}
+        IFS=$sep read -r epoch id app summary body icon de <<<"$1"
         relative_time $((EPOCHSECONDS - epoch)); when=$REPLY
-        truncate "$app" 24
-        set_var n${slot}_head "<span size='small' weight='bold' alpha='70%'>$REPLY</span>  <span size='small' alpha='55%'>$when</span>"
-        truncate "$summary" 34; text="<b>$REPLY</b>"
+        truncate "${app:-Notification}" 24
+        set_var n${slot}_head "<span weight='bold'>$REPLY</span>  <span size='small'>$when</span>"
+        truncate "$summary" 34; text="<span weight='bold'>$REPLY</span>"
         if [ "$id" = "$open" ]; then
             escape "$body"; full=$REPLY
             [ -n "$body" ] && text+=$'\n'"$(fold -s -w 40 <<<"$full")"
@@ -383,10 +539,12 @@ update_notifs() {
         fi
         [ -n "$icon" ] && set_var n${slot}_icon "$icon"
         set_var n${slot}_has_icon "$([ -n "$icon" ] && echo true || echo false)"
-        app_icon "$app"
-        set_var n${slot}_app_icon "icon:${REPLY:-preferences-system-notifications-symbolic}"
+        desktop_entry "$de" "$app"
+        app_icon "$REPLY"
+        set_var n${slot}_app_icon "icon:$REPLY"
+        group_key "$de" "$id" "$app"
         printf '%s' "$id" >"$cache/n${slot}_id"
-        printf '%s' "$app" >"$cache/n${slot}_app"
+        printf '%s' "$REPLY" >"$cache/n${slot}_app"
         printf '%s' "$2" >"$cache/n${slot}_stack"
         set_var n${slot}_more "$more"
         set_var n${slot}_less "$less"
@@ -396,22 +554,23 @@ update_notifs() {
     }
 
     if [ -n "$expanded" ]; then
-        escape "$expanded"
-        set_var group_name "<span size='large' weight='bold'>$REPLY</span>"
+        escape "${name[$expanded]}"
+        set_var group_name "<span size='large' weight='800'>$REPLY</span>"
         set_var group_show true
         for line in "${lines[@]}"; do
-            IFS=$sep read -r epoch id app _ <<<"$line"
-            [ "${app:-Notification}" = "$expanded" ] && fill_slot "$line" 0
+            IFS=$sep read -r epoch id app summary body icon de <<<"$line"
+            group_key "$de" "$id" "$app"
+            [ "$REPLY" = "$expanded" ] && fill_slot "$line" 0
         done
     else
         set_var group_show false
-        for app in "${order[@]}"; do
-            n=$((count[$app] - 1))
-            fill_slot "${newest[$app]}" $((n > 2 ? 2 : n))
+        for key in "${order[@]}"; do
+            n=$((count[$key] - 1))
+            fill_slot "${newest[$key]}" $((n > 2 ? 2 : n))
         done
     fi
     if ((slot)); then set_var n_empty false; set_var n_any true
-    else set_var n_empty true; set_var n_any false
+    else set_var n_empty true; set_var n_any false; rm -f "$cache/unseen"; set_var unread false
     fi
     for ((slot++; slot <= 5; slot++)); do
         set_var n${slot}_show false
@@ -428,7 +587,7 @@ rm_notif() {
 }
 
 # Turns dbus-monitor output into one line per event:
-#   notif-new <id> <replaces> <app> <icon> <summary> <body>  (\x1f separated)
+#   notif-new <id> <replaces> <app> <icon> <summary> <body> <desktop entry>  (\x1f separated)
 #   notif-closed <id>
 # A new notification's id is only in dunst's reply, so calls are matched to
 # replies by serial. Everything else dunst replies (e.g. history dumps) is dropped.
@@ -437,7 +596,7 @@ notif_filter() {
     function field(s) { return substr(s, index(s, "\"") + 1) }
     /^(signal|method call|method return|error) / {
         mode = ""
-        if ($0 ~ /member=Notify$/) { mode = "args"; n = 0; inq = 0; s = $0; sub(/.* serial=/, "", s); sub(/ .*/, "", s); serial = s }
+        if ($0 ~ /member=Notify$/) { mode = "args"; n = 0; inq = 0; de = ""; s = $0; sub(/.* serial=/, "", s); sub(/ .*/, "", s); serial = s }
         else if ($0 ~ /member=NotificationClosed$/) mode = "closed"
         else if ($0 ~ /^method return / && $0 ~ / reply_serial=/) { s = $0; sub(/.* reply_serial=/, "", s); if (s in pending) { mode = "reply"; reply = s } }
         next
@@ -450,7 +609,14 @@ notif_filter() {
             else { inq = 1; buf = v }
         }
         else if ($0 ~ /^   uint32 /) val[n++] = $2
-        if (n == 5) { pending[serial] = val[1] SEP val[0] SEP val[2] SEP val[3] SEP val[4]; mode = "" }
+        if (n == 5) mode = "hints"
+        next
+    }
+    # the args end with the timeout, after the actions and hints
+    mode == "hints" {
+        if ($0 ~ /string "desktop-entry"$/) want = 1
+        else if (want && $0 ~ /variant/) { de = $0; sub(/.*string "/, "", de); sub(/"$/, "", de); want = 0 }
+        else if ($0 ~ /^   int32 /) { pending[serial] = val[1] SEP val[0] SEP val[2] SEP val[3] SEP val[4] SEP de; mode = "" }
         next
     }
     mode == "reply" && /^   uint32 / { print "notif-new" SEP $2 SEP pending[reply]; fflush(); delete pending[reply]; mode = ""; next }
@@ -461,32 +627,45 @@ notif_filter() {
 daemon() {
     local pidfile="$cache/daemon.pids" fifo="$cache/events" pids="" p line bar=$PPID
     local net vol bat profile bt active notif minute last_minute day last_day
-    local id replaces app icon summary body
+    local id replaces app icon summary body de
 
     mkdir -p "$cache"
 
     # stop a previous daemon and its listeners, which outlive it if it was killed
     if [ -f "$pidfile" ]; then
         for p in $(<"$pidfile"); do
-            [[ $(tr '\0' ' ' </proc/$p/cmdline 2>/dev/null) == *@(qs.sh|monitor|subscribe|rfkill|awk)* ]] && kill "$p"
+            [[ $(tr '\0' ' ' </proc/$p/cmdline 2>/dev/null) == *@(qs.sh|monitor|subscribe|rfkill|awk|socat)* ]] && kill "$p"
         done
     fi
     trap 'kill $pids 2>/dev/null' EXIT
     trap exit TERM INT HUP
 
     # ironbar starts with no vars or extra styles, so resend everything;
-    # vol stays, as the slider may poll it before update_vol runs
-    find "$cache" -maxdepth 1 -type f ! -name vol -delete
+    # slider values stay, as the sliders may poll them before they're updated
+    find "$cache" -maxdepth 1 -type f ! -name vol ! -name night_temp -delete
     write_state
     ironbar style load-css "$cache/state.css" >/dev/null 2>&1
-    update_net; update_vol; update_bat; update_profile; update_bt
-    [[ $(dunstctl is-paused) == true ]] && show_dnd 1 || show_dnd 0
-    update_clock; update_calendar; update_notifs
+    load_icons
+    update_ws
+    update_net
+    update_vol
+    update_bat
+    update_profile
+    update_bt
+    update_night
+    update_kbd
+    [[ $(dunstctl is-paused 2>/dev/null) == true ]] && show_dnd 1 || show_dnd 0
+    clock_format; update_clock
+    update_calendar
+    update_notifs
 
     # every listener writes into one fifo, read by a single loop below;
     # the fd is opened read-write so it never hits EOF
     rm -f "$fifo"; mkfifo "$fifo"
     exec 3<>"$fifo"
+    # Hyprland's event socket, for workspaces
+    socat -u "UNIX-CONNECT:$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock" - >&3 &
+    pids+=" $!"
     nmcli monitor >&3 & pids+=" $!"
     pactl subscribe >&3 & pids+=" $!"
     upower --monitor >&3 & pids+=" $!"
@@ -505,10 +684,12 @@ daemon() {
         # tick the clock, even when events keep the loop busy
         printf -v minute '%(%H%M)T' -1
         if [ "$minute" != "$last_minute" ]; then
+            update_notifs  # refreshes the "N min ago" labels
             update_clock
             printf -v day '%(%j)T' -1
             [ "$day" != "$last_day" ] && { update_calendar; last_day=$day; }
-            update_notifs  # refreshes the "N min ago" labels
+            update_night
+            update_kbd
             last_minute=$minute
         fi
         if ! read -r -t 5 -u 3 line; then
@@ -517,16 +698,19 @@ daemon() {
             continue
         fi
         # gather a burst of events, then update each source once
-        net= vol= bat= profile= bt= notif=
+        net= vol= bat= profile= bt= notif= ws=
         while :; do
             case "$line" in
+            workspace*">>"* | createworkspace*">>"* | destroyworkspace*">>"* | changeworkspaceid">>"* | \
+                moveworkspace*">>"* | focusedmon*">>"*) ws=1 ;;
+            *">>"*) ;;  # other Hyprland events
             "notif-new$sep"*)
-                IFS=$sep read -r _ id replaces app icon summary body <<<"$line"
+                IFS=$sep read -r _ id replaces app icon summary body de <<<"$line"
                 touch "$cache/displayed"
                 sed -i "/^$id$sep/d; /^$replaces$sep/d" "$cache/displayed"
-                printf '%s\n' "$id$sep$app$sep$summary$sep$body$sep$icon$sep$EPOCHSECONDS" >>"$cache/displayed"
+                printf '%s\n' "$id$sep$app$sep$summary$sep$body$sep$icon$sep$EPOCHSECONDS$sep$de" >>"$cache/displayed"
                 # GNOME's unread dot
-                : >"$cache/unread"
+                : >"$cache/unseen"
                 notif=1
                 ;;
             "notif-closed "*)
@@ -549,12 +733,13 @@ daemon() {
             esac
             read -r -t 0.05 -u 3 line || break
         done
+        [ -n "$ws" ] && update_ws
         [ -n "$net" ] && update_net
         [ -n "$vol" ] && update_vol
         [ -n "$bat" ] && update_bat
         [ -n "$profile" ] && show_profile "$profile"
         [ -n "$bt" ] && update_bt
-        [ -n "$notif" ] && { update_clock; update_notifs; }
+        [ -n "$notif" ] && { update_notifs; update_clock; }
     done
 }
 
@@ -566,7 +751,7 @@ wifi-toggle)
         nmcli radio wifi off
     else
         set_var wifi_icon network-wireless-offline-symbolic
-        show_wifi 1 Wi-Fi
+        show_wifi 1
         nmcli radio wifi on
     fi
     ;;
@@ -588,6 +773,89 @@ dnd-toggle)
         dunstctl set-paused true
     fi
     ;;
+wired-toggle)
+    dev=$(nmcli -t -f DEVICE,TYPE dev | awk -F: '$2=="ethernet"{print $1; exit}')
+    if is_active wired; then
+        set_active wired 0
+        nmcli device disconnect "$dev"
+    else
+        set_active wired 1
+        nmcli device connect "$dev"
+    fi
+    ;;
+airplane-toggle)
+    if is_active airplane; then
+        set_active airplane 0
+        rfkill unblock all
+    else
+        set_active airplane 1
+        rfkill block all
+    fi
+    ;;
+night-toggle)
+    if is_active night; then
+        set_active night 0
+        set_var night_on false
+        pkill -x hyprsunset
+    else
+        set_active night 1
+        set_var night_on true
+        night_temp
+        setsid -f hyprsunset -t "$REPLY" >/dev/null 2>&1
+    fi
+    ;;
+night-temp)
+    [[ $2 =~ ^[0-9]+$ ]] || exit
+    mkdir -p "$state"
+    printf '%s' "$2" >"$state/night-temp"
+    printf '%s' "$2" >"$cache/night_temp"
+    pgrep -x hyprsunset >/dev/null && hyprctl hyprsunset temperature "$2" >/dev/null
+    ;;
+kbd-set)
+    [ -n "$kbd" ] || exit
+    set_state kbd_level "$2"
+    ((${2} > 0)) && set_active kbd 1 || set_active kbd 0
+    brightnessctl -q -d "${kbd##*/}" set "$2"
+    ;;
+kbd-toggle)
+    [ -n "$kbd" ] || exit
+    if is_active kbd; then
+        set_active kbd 0
+        cat "$kbd/brightness" >"$cache/kbd_last"
+        brightnessctl -q -d "${kbd##*/}" set 0
+        set_state kbd_level 0
+    else
+        set_active kbd 1
+        get kbd_last
+        level=${REPLY:-$(<"$kbd/max_brightness")}
+        ((level > 0)) || level=$(<"$kbd/max_brightness")
+        brightnessctl -q -d "${kbd##*/}" set "$level"
+        set_state kbd_level "$level"
+    fi
+    ;;
+profile-set)
+    show_profile "$2"
+    busctl set-property "${pp[@]}" s "$2"
+    ;;
+menu)
+    # the submenus that GNOME's arrow buttons open: one at a time
+    get menu_open
+    [ "$REPLY" = "$2" ] && next= || next=$2
+    set_state menu_open "$next"
+    for m in profile kbd power; do
+        [ "$m" = "$next" ] && set_var "menu_$m" true || set_var "menu_$m" false
+    done
+    ;;
+screenshot)
+    # GNOME's screenshot button: pick an area, save it and copy it
+    ironbar bar main hide-popup >/dev/null
+    dir=$(xdg-user-dir PICTURES 2>/dev/null || echo ~/Pictures)/Screenshots
+    mkdir -p "$dir"
+    sleep 0.2
+    area=$(slurp) || exit
+    file="$dir/Screenshot From $(date '+%Y-%m-%d %H-%M-%S').png"
+    grim -g "$area" "$file" && wl-copy <"$file"
+    ;;
 profile-cycle)
     # cached value, so rapid clicks step from the last shown profile
     get profile
@@ -599,9 +867,22 @@ profile-cycle)
     show_profile "$next"
     busctl set-property "${pp[@]}" s "$next"
     ;;
+quick-settings)
+    ironbar bar main toggle-popup quick-settings >/dev/null
+    # like GNOME, the menu opens with its submenus closed
+    get menu_open
+    [ -n "$REPLY" ] && { set_state menu_open ""; for m in profile kbd power; do set_var "menu_$m" false; done; }
+    ;;
+ws-focus)
+    get "ws$2"
+    [ -n "$REPLY" ] || exit
+    # Lua config (Hyprland 0.55+), else the classic dispatcher
+    [ "$(hyprctl dispatch "hl.dsp.focus({ workspace = $REPLY })")" = ok ] ||
+        hyprctl dispatch workspace "$REPLY" >/dev/null
+    ;;
 date-menu)
     ironbar bar main toggle-popup date-menu >/dev/null
-    rm -f "$cache/unread"
+    rm -f "$cache/unseen"
     update_clock
     # like GNOME, the menu opens on the current month with stacks collapsed
     get cal_offset; [ "${REPLY:-0}" != 0 ] && { printf 0 >"$cache/cal_offset"; update_calendar; }

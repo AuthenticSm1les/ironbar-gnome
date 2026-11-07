@@ -1,628 +1,815 @@
-let {
-    $has_battery = "ls /sys/class/power_supply/ | grep --quiet '^BAT'"
-
-    // --- start: GNOME 45+ workspace pills ---
-
-    $workspaces = {
-        type = "workspaces"
-        sort = "index"
-        format = " "
-    }
-
-    // --- center: date menu (clock, notifications, calendar) ---
-
-    // Notification cards, GNOME 48+ style: a header (app icon, app name, time)
-    // with expand and close buttons over its corner, then the notification's
-    // icon, title and body. scripts/qs.sh fills them newest first, one card per
-    // app with the app's other notifications as layers underneath.
-    // Clicking a stack expands it; clicking a single card dismisses it.
-    $notif_1 = {
-        type = "box"
-        class = "notif-slot"
-        orientation = "vertical"
-        show_if = "#n1_show"
-        transition_type = "none"
-        widgets = [
-            {
-                type = "box"
-                class = "notif"
-                widgets = [
-                    {
-                        type = "button"
-                        class = "notif-body"
-                        on_click = "!~/.config/ironbar/scripts/qs.sh notif-click 1"
-                        widgets = [ {
-                            type = "box"
-                            orientation = "vertical"
-                            widgets = [
-                                {
-                                    type = "box"
-                                    class = "notif-head"
-                                    halign = "start"
-                                    widgets = [
-                                        { type = "image" class = "app-icon" size = 16 src = "#n1_app_icon" }
-                                        { type = "label" label = "#n1_head" }
-                                    ]
-                                }
-                                {
-                                    type = "box"
-                                    halign = "start"
-                                    widgets = [
-                                        { type = "image" class = "notif-icon" size = 40 src = "#n1_icon" show_if = "#n1_has_icon" transition_type = "none" }
-                                        { type = "label" justify = "left" label = "#n1_markup" }
-                                    ]
-                                }
-                            ]
-                        } ]
-                    }
-                    {
-                        type = "box"
-                        class = "notif-btns"
-                        valign = "start"
-                        widgets = [
-                            { type = "button" class = "nbtn" show_if = "#n1_more" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-open 1" widgets = [ { type = "image" size = 16 src = "icon:pan-down-symbolic" } ] }
-                            { type = "button" class = "nbtn" show_if = "#n1_less" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-close-text" widgets = [ { type = "image" size = 16 src = "icon:pan-up-symbolic" } ] }
-                            { type = "button" class = "nbtn" on_click = "!~/.config/ironbar/scripts/qs.sh notif-rm 1" widgets = [ { type = "image" size = 16 src = "icon:window-close-symbolic" } ] }
-                        ]
-                    }
-                ]
-            }
-            { type = "box" class = "layer layer1" show_if = "#n1_layer1" transition_type = "none" }
-            { type = "box" class = "layer layer2" show_if = "#n1_layer2" transition_type = "none" }
-        ]
-    }
-    $notif_2 = {
-        type = "box"
-        class = "notif-slot"
-        orientation = "vertical"
-        show_if = "#n2_show"
-        transition_type = "none"
-        widgets = [
-            {
-                type = "box"
-                class = "notif"
-                widgets = [
-                    {
-                        type = "button"
-                        class = "notif-body"
-                        on_click = "!~/.config/ironbar/scripts/qs.sh notif-click 2"
-                        widgets = [ {
-                            type = "box"
-                            orientation = "vertical"
-                            widgets = [
-                                {
-                                    type = "box"
-                                    class = "notif-head"
-                                    halign = "start"
-                                    widgets = [
-                                        { type = "image" class = "app-icon" size = 16 src = "#n2_app_icon" }
-                                        { type = "label" label = "#n2_head" }
-                                    ]
-                                }
-                                {
-                                    type = "box"
-                                    halign = "start"
-                                    widgets = [
-                                        { type = "image" class = "notif-icon" size = 40 src = "#n2_icon" show_if = "#n2_has_icon" transition_type = "none" }
-                                        { type = "label" justify = "left" label = "#n2_markup" }
-                                    ]
-                                }
-                            ]
-                        } ]
-                    }
-                    {
-                        type = "box"
-                        class = "notif-btns"
-                        valign = "start"
-                        widgets = [
-                            { type = "button" class = "nbtn" show_if = "#n2_more" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-open 2" widgets = [ { type = "image" size = 16 src = "icon:pan-down-symbolic" } ] }
-                            { type = "button" class = "nbtn" show_if = "#n2_less" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-close-text" widgets = [ { type = "image" size = 16 src = "icon:pan-up-symbolic" } ] }
-                            { type = "button" class = "nbtn" on_click = "!~/.config/ironbar/scripts/qs.sh notif-rm 2" widgets = [ { type = "image" size = 16 src = "icon:window-close-symbolic" } ] }
-                        ]
-                    }
-                ]
-            }
-            { type = "box" class = "layer layer1" show_if = "#n2_layer1" transition_type = "none" }
-            { type = "box" class = "layer layer2" show_if = "#n2_layer2" transition_type = "none" }
-        ]
-    }
-    $notif_3 = {
-        type = "box"
-        class = "notif-slot"
-        orientation = "vertical"
-        show_if = "#n3_show"
-        transition_type = "none"
-        widgets = [
-            {
-                type = "box"
-                class = "notif"
-                widgets = [
-                    {
-                        type = "button"
-                        class = "notif-body"
-                        on_click = "!~/.config/ironbar/scripts/qs.sh notif-click 3"
-                        widgets = [ {
-                            type = "box"
-                            orientation = "vertical"
-                            widgets = [
-                                {
-                                    type = "box"
-                                    class = "notif-head"
-                                    halign = "start"
-                                    widgets = [
-                                        { type = "image" class = "app-icon" size = 16 src = "#n3_app_icon" }
-                                        { type = "label" label = "#n3_head" }
-                                    ]
-                                }
-                                {
-                                    type = "box"
-                                    halign = "start"
-                                    widgets = [
-                                        { type = "image" class = "notif-icon" size = 40 src = "#n3_icon" show_if = "#n3_has_icon" transition_type = "none" }
-                                        { type = "label" justify = "left" label = "#n3_markup" }
-                                    ]
-                                }
-                            ]
-                        } ]
-                    }
-                    {
-                        type = "box"
-                        class = "notif-btns"
-                        valign = "start"
-                        widgets = [
-                            { type = "button" class = "nbtn" show_if = "#n3_more" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-open 3" widgets = [ { type = "image" size = 16 src = "icon:pan-down-symbolic" } ] }
-                            { type = "button" class = "nbtn" show_if = "#n3_less" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-close-text" widgets = [ { type = "image" size = 16 src = "icon:pan-up-symbolic" } ] }
-                            { type = "button" class = "nbtn" on_click = "!~/.config/ironbar/scripts/qs.sh notif-rm 3" widgets = [ { type = "image" size = 16 src = "icon:window-close-symbolic" } ] }
-                        ]
-                    }
-                ]
-            }
-            { type = "box" class = "layer layer1" show_if = "#n3_layer1" transition_type = "none" }
-            { type = "box" class = "layer layer2" show_if = "#n3_layer2" transition_type = "none" }
-        ]
-    }
-    $notif_4 = {
-        type = "box"
-        class = "notif-slot"
-        orientation = "vertical"
-        show_if = "#n4_show"
-        transition_type = "none"
-        widgets = [
-            {
-                type = "box"
-                class = "notif"
-                widgets = [
-                    {
-                        type = "button"
-                        class = "notif-body"
-                        on_click = "!~/.config/ironbar/scripts/qs.sh notif-click 4"
-                        widgets = [ {
-                            type = "box"
-                            orientation = "vertical"
-                            widgets = [
-                                {
-                                    type = "box"
-                                    class = "notif-head"
-                                    halign = "start"
-                                    widgets = [
-                                        { type = "image" class = "app-icon" size = 16 src = "#n4_app_icon" }
-                                        { type = "label" label = "#n4_head" }
-                                    ]
-                                }
-                                {
-                                    type = "box"
-                                    halign = "start"
-                                    widgets = [
-                                        { type = "image" class = "notif-icon" size = 40 src = "#n4_icon" show_if = "#n4_has_icon" transition_type = "none" }
-                                        { type = "label" justify = "left" label = "#n4_markup" }
-                                    ]
-                                }
-                            ]
-                        } ]
-                    }
-                    {
-                        type = "box"
-                        class = "notif-btns"
-                        valign = "start"
-                        widgets = [
-                            { type = "button" class = "nbtn" show_if = "#n4_more" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-open 4" widgets = [ { type = "image" size = 16 src = "icon:pan-down-symbolic" } ] }
-                            { type = "button" class = "nbtn" show_if = "#n4_less" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-close-text" widgets = [ { type = "image" size = 16 src = "icon:pan-up-symbolic" } ] }
-                            { type = "button" class = "nbtn" on_click = "!~/.config/ironbar/scripts/qs.sh notif-rm 4" widgets = [ { type = "image" size = 16 src = "icon:window-close-symbolic" } ] }
-                        ]
-                    }
-                ]
-            }
-            { type = "box" class = "layer layer1" show_if = "#n4_layer1" transition_type = "none" }
-            { type = "box" class = "layer layer2" show_if = "#n4_layer2" transition_type = "none" }
-        ]
-    }
-    $notif_5 = {
-        type = "box"
-        class = "notif-slot"
-        orientation = "vertical"
-        show_if = "#n5_show"
-        transition_type = "none"
-        widgets = [
-            {
-                type = "box"
-                class = "notif"
-                widgets = [
-                    {
-                        type = "button"
-                        class = "notif-body"
-                        on_click = "!~/.config/ironbar/scripts/qs.sh notif-click 5"
-                        widgets = [ {
-                            type = "box"
-                            orientation = "vertical"
-                            widgets = [
-                                {
-                                    type = "box"
-                                    class = "notif-head"
-                                    halign = "start"
-                                    widgets = [
-                                        { type = "image" class = "app-icon" size = 16 src = "#n5_app_icon" }
-                                        { type = "label" label = "#n5_head" }
-                                    ]
-                                }
-                                {
-                                    type = "box"
-                                    halign = "start"
-                                    widgets = [
-                                        { type = "image" class = "notif-icon" size = 40 src = "#n5_icon" show_if = "#n5_has_icon" transition_type = "none" }
-                                        { type = "label" justify = "left" label = "#n5_markup" }
-                                    ]
-                                }
-                            ]
-                        } ]
-                    }
-                    {
-                        type = "box"
-                        class = "notif-btns"
-                        valign = "start"
-                        widgets = [
-                            { type = "button" class = "nbtn" show_if = "#n5_more" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-open 5" widgets = [ { type = "image" size = 16 src = "icon:pan-down-symbolic" } ] }
-                            { type = "button" class = "nbtn" show_if = "#n5_less" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-close-text" widgets = [ { type = "image" size = 16 src = "icon:pan-up-symbolic" } ] }
-                            { type = "button" class = "nbtn" on_click = "!~/.config/ironbar/scripts/qs.sh notif-rm 5" widgets = [ { type = "image" size = 16 src = "icon:window-close-symbolic" } ] }
-                        ]
-                    }
-                ]
-            }
-            { type = "box" class = "layer layer1" show_if = "#n5_layer1" transition_type = "none" }
-            { type = "box" class = "layer layer2" show_if = "#n5_layer2" transition_type = "none" }
-        ]
-    }
-
-    $date_menu = {
-        type = "custom"
-        name = "date-menu"
-        class = "date-menu"
-
-        bar = [
-            // opened through the script so it can also clear the unread dot
-            {
-                type = "button"
-                class = "clock"
-                on_click = "!~/.config/ironbar/scripts/qs.sh date-menu"
-                widgets = [
-                    { type = "label" label = "#clock_markup" }
-                    { type = "image" class = "dnd-ind" size = 16 src = "icon:notifications-disabled-symbolic" show_if = "#dnd_on" transition_type = "none" }
-                ]
-            }
-        ]
-
-        popup = [
-            {
-                type = "box"
-                class = "dm-menu"
-                widgets = [
-                    {
-                        type = "box"
-                        class = "notif-col"
-                        orientation = "vertical"
-                        widgets = [
-                            {
-                                type = "box"
-                                class = "notif-list"
-                                orientation = "vertical"
-                                widgets = [
-                                    {
-                                        type = "box"
-                                        class = "notif-empty"
-                                        orientation = "vertical"
-                                        show_if = "#n_empty"
-                                        transition_type = "none"
-                                        widgets = [
-                                            { type = "image" size = 64 src = "icon:preferences-system-notifications-symbolic" }
-                                            { type = "label" label = "No Notifications" }
-                                        ]
-                                    }
-                                    // header of an expanded stack
-                                    {
-                                        type = "box"
-                                        class = "group-head"
-                                        show_if = "#group_show"
-                                        transition_type = "none"
-                                        widgets = [
-                                            { type = "box" class = "group-name" widgets = [ { type = "label" label = "#group_name" } ] }
-                                            { type = "button" class = "nbtn collapse" on_click = "!~/.config/ironbar/scripts/qs.sh group-collapse" widgets = [ { type = "image" size = 16 src = "icon:view-restore-symbolic" } ] }
-                                        ]
-                                    }
-                                    $notif_1 $notif_2 $notif_3 $notif_4 $notif_5
-                                ]
-                            }
-                            {
-                                type = "box"
-                                class = "notif-footer"
-                                orientation = "vertical"
-                                widgets = [ {
-                                    type = "box"
-                                    halign = "end"
-                                    widgets = [ { type = "button" class = "clear" label = "Clear" show_if = "#n_any" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-clear" } ]
-                                } ]
-                            }
-                        ]
-                    }
-                    {
-                        type = "box"
-                        class = "cal-col"
-                        orientation = "vertical"
-                        valign = "start"
-                        widgets = [
-                            // weekday and date; clicking returns to the current month
-                            {
-                                type = "button"
-                                class = "cal-date"
-                                on_click = "!~/.config/ironbar/scripts/qs.sh cal-today"
-                                widgets = [ {
-                                    type = "box"
-                                    orientation = "vertical"
-                                    halign = "start"
-                                    widgets = [
-                                        { type = "box" halign = "start" widgets = [ { type = "label" class = "weekday" label = "#cal_weekday" } ] }
-                                        { type = "box" halign = "start" widgets = [ { type = "label" class = "date" label = "#cal_date" } ] }
-                                    ]
-                                } ]
-                            }
-                            {
-                                type = "box"
-                                class = "cal-grid"
-                                orientation = "vertical"
-                                widgets = [
-                                    {
-                                        type = "box"
-                                        class = "cal-nav"
-                                        widgets = [
-                                            { type = "button" class = "nav" on_click = "!~/.config/ironbar/scripts/qs.sh cal-prev" widgets = [ { type = "image" size = 16 src = "icon:go-previous-symbolic" } ] }
-                                            { type = "label" class = "month" label = "#cal_month" }
-                                            { type = "button" class = "nav" on_click = "!~/.config/ironbar/scripts/qs.sh cal-next" widgets = [ { type = "image" size = 16 src = "icon:go-next-symbolic" } ] }
-                                        ]
-                                    }
-                                    { type = "box" class = "cal-row" widgets = [
-                                        { type = "label" class = "dow" label = "#cal_h1" } { type = "label" class = "dow" label = "#cal_h2" } { type = "label" class = "dow" label = "#cal_h3" } { type = "label" class = "dow" label = "#cal_h4" } { type = "label" class = "dow" label = "#cal_h5" } { type = "label" class = "dow" label = "#cal_h6" } { type = "label" class = "dow" label = "#cal_h7" }
-                                    ] }
-                                    { type = "box" class = "cal-row" widgets = [
-                                        { type = "label" class = "day c1" label = "#c1" } { type = "label" class = "day c2" label = "#c2" } { type = "label" class = "day c3" label = "#c3" } { type = "label" class = "day c4" label = "#c4" } { type = "label" class = "day c5" label = "#c5" } { type = "label" class = "day c6" label = "#c6" } { type = "label" class = "day c7" label = "#c7" }
-                                    ] }
-                                    { type = "box" class = "cal-row" widgets = [
-                                        { type = "label" class = "day c8" label = "#c8" } { type = "label" class = "day c9" label = "#c9" } { type = "label" class = "day c10" label = "#c10" } { type = "label" class = "day c11" label = "#c11" } { type = "label" class = "day c12" label = "#c12" } { type = "label" class = "day c13" label = "#c13" } { type = "label" class = "day c14" label = "#c14" }
-                                    ] }
-                                    { type = "box" class = "cal-row" widgets = [
-                                        { type = "label" class = "day c15" label = "#c15" } { type = "label" class = "day c16" label = "#c16" } { type = "label" class = "day c17" label = "#c17" } { type = "label" class = "day c18" label = "#c18" } { type = "label" class = "day c19" label = "#c19" } { type = "label" class = "day c20" label = "#c20" } { type = "label" class = "day c21" label = "#c21" }
-                                    ] }
-                                    { type = "box" class = "cal-row" widgets = [
-                                        { type = "label" class = "day c22" label = "#c22" } { type = "label" class = "day c23" label = "#c23" } { type = "label" class = "day c24" label = "#c24" } { type = "label" class = "day c25" label = "#c25" } { type = "label" class = "day c26" label = "#c26" } { type = "label" class = "day c27" label = "#c27" } { type = "label" class = "day c28" label = "#c28" }
-                                    ] }
-                                    { type = "box" class = "cal-row" widgets = [
-                                        { type = "label" class = "day c29" label = "#c29" } { type = "label" class = "day c30" label = "#c30" } { type = "label" class = "day c31" label = "#c31" } { type = "label" class = "day c32" label = "#c32" } { type = "label" class = "day c33" label = "#c33" } { type = "label" class = "day c34" label = "#c34" } { type = "label" class = "day c35" label = "#c35" }
-                                    ] }
-                                    { type = "box" class = "cal-row" widgets = [
-                                        { type = "label" class = "day c36" label = "#c36" } { type = "label" class = "day c37" label = "#c37" } { type = "label" class = "day c38" label = "#c38" } { type = "label" class = "day c39" label = "#c39" } { type = "label" class = "day c40" label = "#c40" } { type = "label" class = "day c41" label = "#c41" } { type = "label" class = "day c42" label = "#c42" }
-                                    ] }
-                                ]
-                            }
-                            {
-                                type = "box"
-                                class = "events"
-                                orientation = "vertical"
-                                widgets = [
-                                    { type = "box" halign = "start" widgets = [ { type = "label" class = "events-title" label = "Today" } ] }
-                                    { type = "box" halign = "start" widgets = [ { type = "label" class = "events-none" label = "No Events" } ] }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-    }
-
-    // --- end: tray + quick settings ---
-
-    $tray = { type = "tray" }
-
-    // Toggle tiles: scripts/qs.sh sets their icon and label ironvars, and
-    // highlights active ones through a generated stylesheet (state.css).
-    // Labels take their whole markup from one ironvar, as a partly
-    // substituted string is invalid markup.
-
-    $wifi_tile = {
-        type = "button"
-        class = "tile wifi"
-        on_click = "!~/.config/ironbar/scripts/qs.sh wifi-toggle"
-        widgets = [
-            { type = "image" size = 16 src = "icon:#wifi_icon" }
-            { type = "label" justify = "left" label = "#wifi_markup" }
-        ]
-    }
-
-    $bt_tile = {
-        type = "button"
-        class = "tile bt"
-        on_click = "!~/.config/ironbar/scripts/qs.sh bt-toggle"
-        widgets = [
-            { type = "image" size = 16 src = "icon:#bt_icon" }
-            { type = "label" justify = "left" label = "#bt_markup" }
-        ]
-    }
-
-    $profile_tile = {
-        type = "button"
-        class = "tile profile"
-        on_click = "!~/.config/ironbar/scripts/qs.sh profile-cycle"
-        widgets = [
-            { type = "image" size = 16 src = "icon:#profile_icon" }
-            { type = "label" justify = "left" label = "#profile_markup" }
-        ]
-    }
-
-    $dnd_tile = {
-        type = "button"
-        class = "tile dnd"
-        on_click = "!~/.config/ironbar/scripts/qs.sh dnd-toggle"
-        widgets = [
-            { type = "image" size = 16 src = "icon:#dnd_icon" }
-            { type = "label" justify = "left" label = "#dnd_markup" }
-        ]
-    }
-
-    $net_tile = {
-        type = "button"
-        class = "tile"
-        on_click = "!nm-connection-editor"
-        widgets = [
-            { type = "image" size = 16 src = "icon:network-wired-symbolic" }
-            { type = "label" justify = "left" label = "<b>Network</b>\n<span size='small' alpha='60%'>Settings</span>" }
-        ]
-    }
-
-    $quick_settings = {
-        type = "custom"
-        name = "quick-settings"
-        class = "quick-settings"
-
-        bar = [
-            // event listener feeding the ironvars below; prints nothing
-            { type = "label" name = "qs-daemon" label = "{{watch:~/.config/ironbar/scripts/qs.sh daemon}}" }
-            {
-                type = "button"
-                class = "indicators"
-                on_click = "popup:toggle"
-                widgets = [
-                    { type = "image" size = 16 src = "icon:#net_icon" }
-                    { type = "image" size = 16 src = "icon:#vol_icon" }
-                    { type = "image" size = 16 src = "icon:#bat_icon" show_if = $has_battery }
-                ]
-            }
-        ]
-
-        popup = [
-            {
-                type = "box"
-                class = "qs-menu"
-                orientation = "vertical"
-                widgets = [
-                    // top row: battery, lock, reboot, power off
-                    {
-                        type = "box"
-                        name = "top-row"
-                        widgets = [
-                            {
-                                type = "button"
-                                class = "pill"
-                                show_if = $has_battery
-                                widgets = [
-                                    { type = "image" size = 16 src = "icon:#bat_icon" }
-                                    { type = "label" label = "#bat_pct" }
-                                ]
-                            }
-                            { type = "box" name = "spacer" }
-                            {
-                                type = "button"
-                                class = "round"
-                                on_click = "!hyprlock"
-                                widgets = [ { type = "image" size = 16 src = "icon:system-lock-screen-symbolic" } ]
-                            }
-                            {
-                                type = "button"
-                                class = "round"
-                                on_click = "!systemctl reboot"
-                                widgets = [ { type = "image" size = 16 src = "icon:system-reboot-symbolic" } ]
-                            }
-                            {
-                                type = "button"
-                                class = "round"
-                                on_click = "!systemctl poweroff"
-                                widgets = [ { type = "image" size = 16 src = "icon:system-shutdown-symbolic" } ]
-                            }
-                        ]
-                    }
-
-                    // sliders: polled, as ironbar sliders can't read ironvars;
-                    // each poll is a single cat of a file the daemon keeps current
-                    {
-                        type = "box"
-                        class = "slider-row"
-                        widgets = [
-                            {
-                                type = "button"
-                                class = "round"
-                                on_click = "!wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
-                                widgets = [ { type = "image" size = 16 src = "icon:#vol_icon" } ]
-                            }
-                            {
-                                type = "slider"
-                                length = 342
-                                step = 5
-                                show_label = false
-                                value = "500:cat ${XDG_RUNTIME_DIR}/ironbar-qs/vol"
-                                on_change = "!wpctl set-volume @DEFAULT_AUDIO_SINK@ ${0%.*}%"
-                            }
-                        ]
-                    }
-                    {
-                        type = "box"
-                        class = "slider-row"
-                        show_if = "ls /sys/class/backlight/ | grep --quiet ."
-                        widgets = [
-                            {
-                                type = "button"
-                                class = "round"
-                                widgets = [ { type = "image" size = 16 src = "icon:display-brightness-symbolic" } ]
-                            }
-                            {
-                                type = "slider"
-                                length = 342
-                                // raw sysfs values, as reading the file is the cheapest poll
-                                min = 75
-                                max = 7500
-                                step = 375
-                                show_label = false
-                                value = "500:cat /sys/class/backlight/intel_backlight/brightness"
-                                on_change = "!brightnessctl -q set ${0%.*}"
-                            }
-                        ]
-                    }
-
-                    // toggle tiles, two per row
-                    { type = "box" class = "tile-row" widgets = [ $wifi_tile $net_tile ] }
-                    { type = "box" class = "tile-row" widgets = [ $profile_tile $bt_tile ] }
-                    { type = "box" class = "tile-row" widgets = [ $dnd_tile ] }
-                ]
-            }
-        ]
-    }
-} in {
-    // --- bar ---
-
+{
     name = "main"
     position = "top"
     height = 32
     icon_theme = "Adwaita"
     popup_autohide = true
 
-    // --- layout ---
+    start = [
+        // scripts/qs.sh feeds every module's ironvars; it prints nothing
+        { type = "label" name = "qs-daemon" label = "{{watch:~/.config/ironbar/scripts/qs.sh daemon}}" }
+        {
+            type = "custom"
+            name = "workspaces"
+            class = "workspaces"
+            bar = [
+                { type = "button" class = "item w1" show_if = "#ws1_show" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh ws-focus 1" }
+                { type = "button" class = "item w2" show_if = "#ws2_show" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh ws-focus 2" }
+                { type = "button" class = "item w3" show_if = "#ws3_show" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh ws-focus 3" }
+                { type = "button" class = "item w4" show_if = "#ws4_show" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh ws-focus 4" }
+                { type = "button" class = "item w5" show_if = "#ws5_show" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh ws-focus 5" }
+                { type = "button" class = "item w6" show_if = "#ws6_show" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh ws-focus 6" }
+                { type = "button" class = "item w7" show_if = "#ws7_show" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh ws-focus 7" }
+                { type = "button" class = "item w8" show_if = "#ws8_show" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh ws-focus 8" }
+                { type = "button" class = "item w9" show_if = "#ws9_show" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh ws-focus 9" }
+                { type = "button" class = "item w10" show_if = "#ws10_show" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh ws-focus 10" }
+            ]
+        }
+    ]
+    center = [
+        {
+            type = "custom"
+            name = "date-menu"
+            class = "date-menu"
 
-    start = [ $workspaces ]
-    center = [ $date_menu ]
-    end = [ $tray $quick_settings ]
+            bar = [
+                // opened through the script, so it can also clear the unread dot
+                {
+                    type = "button"
+                    class = "clock"
+                    on_click = "!~/.config/ironbar/scripts/qs.sh date-menu"
+                    widgets = [
+                        { type = "label" label = "#clock_markup" }
+                        { type = "image" class = "clock-ind" size = 16 src = "#icon_message_indicator_symbolic" show_if = "#unread" transition_type = "none" }
+                        { type = "image" class = "clock-ind" size = 16 src = "icon:notifications-disabled-symbolic" show_if = "#dnd_on" transition_type = "none" }
+                    ]
+                }
+            ]
+
+            popup = [
+                {
+                    type = "box"
+                    class = "dm-menu"
+                    widgets = [
+                        {
+                            type = "box"
+                            class = "notif-col"
+                            orientation = "vertical"
+                            widgets = [
+                                {
+                                    type = "box"
+                                    class = "notif-list"
+                                    orientation = "vertical"
+                                    widgets = [
+                                        {
+                                            type = "box"
+                                            class = "notif-empty"
+                                            orientation = "vertical"
+                                            show_if = "#n_empty"
+                                            transition_type = "none"
+                                            widgets = [
+                                                { type = "image" size = 96 src = "#icon_no_notifications_symbolic" }
+                                                { type = "label" label = "No Notifications" }
+                                            ]
+                                        }
+                                        // header of an expanded stack
+                                        {
+                                            type = "box"
+                                            class = "group-head"
+                                            show_if = "#group_show"
+                                            transition_type = "none"
+                                            widgets = [
+                                                { type = "box" class = "group-name" widgets = [ { type = "label" label = "#group_name" } ] }
+                                                { type = "button" class = "nbtn collapse" on_click = "!~/.config/ironbar/scripts/qs.sh group-collapse" widgets = [ { type = "image" size = 16 src = "#icon_group_collapse_symbolic" } ] }
+                                            ]
+                                        }
+                                        {
+                                            type = "box"
+                                            class = "notif-slot"
+                                            orientation = "vertical"
+                                            show_if = "#n1_show"
+                                            transition_type = "none"
+                                            widgets = [
+                                                {
+                                                    type = "box"
+                                                    class = "notif"
+                                                    widgets = [
+                                                        {
+                                                            type = "button"
+                                                            class = "notif-body"
+                                                            on_click = "!~/.config/ironbar/scripts/qs.sh notif-click 1"
+                                                            widgets = [ {
+                                                                type = "box"
+                                                                orientation = "vertical"
+                                                                widgets = [
+                                                                    {
+                                                                        type = "box"
+                                                                        class = "notif-head"
+                                                                        halign = "start"
+                                                                        widgets = [
+                                                                            { type = "image" class = "app-icon" size = 16 src = "#n1_app_icon" }
+                                                                            { type = "label" label = "#n1_head" }
+                                                                        ]
+                                                                    }
+                                                                    {
+                                                                        type = "box"
+                                                                        class = "notif-content"
+                                                                        halign = "start"
+                                                                        widgets = [
+                                                                            { type = "image" class = "notif-icon" size = 48 src = "#n1_icon" show_if = "#n1_has_icon" transition_type = "none" }
+                                                                            { type = "label" justify = "left" label = "#n1_markup" }
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            } ]
+                                                        }
+                                                        {
+                                                            type = "box"
+                                                            class = "notif-btns"
+                                                            valign = "start"
+                                                            widgets = [
+                                                                { type = "button" class = "nbtn" show_if = "#n1_more" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-open 1" widgets = [ { type = "image" size = 16 src = "#icon_notification_expand_symbolic" } ] }
+                                                                { type = "button" class = "nbtn" show_if = "#n1_less" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-close-text" widgets = [ { type = "image" size = 16 src = "#icon_group_collapse_symbolic" } ] }
+                                                                { type = "button" class = "nbtn" on_click = "!~/.config/ironbar/scripts/qs.sh notif-rm 1" widgets = [ { type = "image" size = 16 src = "icon:window-close-symbolic" } ] }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                                { type = "box" class = "layer layer1" show_if = "#n1_layer1" transition_type = "none" }
+                                                { type = "box" class = "layer layer2" show_if = "#n1_layer2" transition_type = "none" }
+                                            ]
+                                        }
+                                        {
+                                            type = "box"
+                                            class = "notif-slot"
+                                            orientation = "vertical"
+                                            show_if = "#n2_show"
+                                            transition_type = "none"
+                                            widgets = [
+                                                {
+                                                    type = "box"
+                                                    class = "notif"
+                                                    widgets = [
+                                                        {
+                                                            type = "button"
+                                                            class = "notif-body"
+                                                            on_click = "!~/.config/ironbar/scripts/qs.sh notif-click 2"
+                                                            widgets = [ {
+                                                                type = "box"
+                                                                orientation = "vertical"
+                                                                widgets = [
+                                                                    {
+                                                                        type = "box"
+                                                                        class = "notif-head"
+                                                                        halign = "start"
+                                                                        widgets = [
+                                                                            { type = "image" class = "app-icon" size = 16 src = "#n2_app_icon" }
+                                                                            { type = "label" label = "#n2_head" }
+                                                                        ]
+                                                                    }
+                                                                    {
+                                                                        type = "box"
+                                                                        class = "notif-content"
+                                                                        halign = "start"
+                                                                        widgets = [
+                                                                            { type = "image" class = "notif-icon" size = 48 src = "#n2_icon" show_if = "#n2_has_icon" transition_type = "none" }
+                                                                            { type = "label" justify = "left" label = "#n2_markup" }
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            } ]
+                                                        }
+                                                        {
+                                                            type = "box"
+                                                            class = "notif-btns"
+                                                            valign = "start"
+                                                            widgets = [
+                                                                { type = "button" class = "nbtn" show_if = "#n2_more" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-open 2" widgets = [ { type = "image" size = 16 src = "#icon_notification_expand_symbolic" } ] }
+                                                                { type = "button" class = "nbtn" show_if = "#n2_less" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-close-text" widgets = [ { type = "image" size = 16 src = "#icon_group_collapse_symbolic" } ] }
+                                                                { type = "button" class = "nbtn" on_click = "!~/.config/ironbar/scripts/qs.sh notif-rm 2" widgets = [ { type = "image" size = 16 src = "icon:window-close-symbolic" } ] }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                                { type = "box" class = "layer layer1" show_if = "#n2_layer1" transition_type = "none" }
+                                                { type = "box" class = "layer layer2" show_if = "#n2_layer2" transition_type = "none" }
+                                            ]
+                                        }
+                                        {
+                                            type = "box"
+                                            class = "notif-slot"
+                                            orientation = "vertical"
+                                            show_if = "#n3_show"
+                                            transition_type = "none"
+                                            widgets = [
+                                                {
+                                                    type = "box"
+                                                    class = "notif"
+                                                    widgets = [
+                                                        {
+                                                            type = "button"
+                                                            class = "notif-body"
+                                                            on_click = "!~/.config/ironbar/scripts/qs.sh notif-click 3"
+                                                            widgets = [ {
+                                                                type = "box"
+                                                                orientation = "vertical"
+                                                                widgets = [
+                                                                    {
+                                                                        type = "box"
+                                                                        class = "notif-head"
+                                                                        halign = "start"
+                                                                        widgets = [
+                                                                            { type = "image" class = "app-icon" size = 16 src = "#n3_app_icon" }
+                                                                            { type = "label" label = "#n3_head" }
+                                                                        ]
+                                                                    }
+                                                                    {
+                                                                        type = "box"
+                                                                        class = "notif-content"
+                                                                        halign = "start"
+                                                                        widgets = [
+                                                                            { type = "image" class = "notif-icon" size = 48 src = "#n3_icon" show_if = "#n3_has_icon" transition_type = "none" }
+                                                                            { type = "label" justify = "left" label = "#n3_markup" }
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            } ]
+                                                        }
+                                                        {
+                                                            type = "box"
+                                                            class = "notif-btns"
+                                                            valign = "start"
+                                                            widgets = [
+                                                                { type = "button" class = "nbtn" show_if = "#n3_more" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-open 3" widgets = [ { type = "image" size = 16 src = "#icon_notification_expand_symbolic" } ] }
+                                                                { type = "button" class = "nbtn" show_if = "#n3_less" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-close-text" widgets = [ { type = "image" size = 16 src = "#icon_group_collapse_symbolic" } ] }
+                                                                { type = "button" class = "nbtn" on_click = "!~/.config/ironbar/scripts/qs.sh notif-rm 3" widgets = [ { type = "image" size = 16 src = "icon:window-close-symbolic" } ] }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                                { type = "box" class = "layer layer1" show_if = "#n3_layer1" transition_type = "none" }
+                                                { type = "box" class = "layer layer2" show_if = "#n3_layer2" transition_type = "none" }
+                                            ]
+                                        }
+                                        {
+                                            type = "box"
+                                            class = "notif-slot"
+                                            orientation = "vertical"
+                                            show_if = "#n4_show"
+                                            transition_type = "none"
+                                            widgets = [
+                                                {
+                                                    type = "box"
+                                                    class = "notif"
+                                                    widgets = [
+                                                        {
+                                                            type = "button"
+                                                            class = "notif-body"
+                                                            on_click = "!~/.config/ironbar/scripts/qs.sh notif-click 4"
+                                                            widgets = [ {
+                                                                type = "box"
+                                                                orientation = "vertical"
+                                                                widgets = [
+                                                                    {
+                                                                        type = "box"
+                                                                        class = "notif-head"
+                                                                        halign = "start"
+                                                                        widgets = [
+                                                                            { type = "image" class = "app-icon" size = 16 src = "#n4_app_icon" }
+                                                                            { type = "label" label = "#n4_head" }
+                                                                        ]
+                                                                    }
+                                                                    {
+                                                                        type = "box"
+                                                                        class = "notif-content"
+                                                                        halign = "start"
+                                                                        widgets = [
+                                                                            { type = "image" class = "notif-icon" size = 48 src = "#n4_icon" show_if = "#n4_has_icon" transition_type = "none" }
+                                                                            { type = "label" justify = "left" label = "#n4_markup" }
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            } ]
+                                                        }
+                                                        {
+                                                            type = "box"
+                                                            class = "notif-btns"
+                                                            valign = "start"
+                                                            widgets = [
+                                                                { type = "button" class = "nbtn" show_if = "#n4_more" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-open 4" widgets = [ { type = "image" size = 16 src = "#icon_notification_expand_symbolic" } ] }
+                                                                { type = "button" class = "nbtn" show_if = "#n4_less" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-close-text" widgets = [ { type = "image" size = 16 src = "#icon_group_collapse_symbolic" } ] }
+                                                                { type = "button" class = "nbtn" on_click = "!~/.config/ironbar/scripts/qs.sh notif-rm 4" widgets = [ { type = "image" size = 16 src = "icon:window-close-symbolic" } ] }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                                { type = "box" class = "layer layer1" show_if = "#n4_layer1" transition_type = "none" }
+                                                { type = "box" class = "layer layer2" show_if = "#n4_layer2" transition_type = "none" }
+                                            ]
+                                        }
+                                        {
+                                            type = "box"
+                                            class = "notif-slot"
+                                            orientation = "vertical"
+                                            show_if = "#n5_show"
+                                            transition_type = "none"
+                                            widgets = [
+                                                {
+                                                    type = "box"
+                                                    class = "notif"
+                                                    widgets = [
+                                                        {
+                                                            type = "button"
+                                                            class = "notif-body"
+                                                            on_click = "!~/.config/ironbar/scripts/qs.sh notif-click 5"
+                                                            widgets = [ {
+                                                                type = "box"
+                                                                orientation = "vertical"
+                                                                widgets = [
+                                                                    {
+                                                                        type = "box"
+                                                                        class = "notif-head"
+                                                                        halign = "start"
+                                                                        widgets = [
+                                                                            { type = "image" class = "app-icon" size = 16 src = "#n5_app_icon" }
+                                                                            { type = "label" label = "#n5_head" }
+                                                                        ]
+                                                                    }
+                                                                    {
+                                                                        type = "box"
+                                                                        class = "notif-content"
+                                                                        halign = "start"
+                                                                        widgets = [
+                                                                            { type = "image" class = "notif-icon" size = 48 src = "#n5_icon" show_if = "#n5_has_icon" transition_type = "none" }
+                                                                            { type = "label" justify = "left" label = "#n5_markup" }
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            } ]
+                                                        }
+                                                        {
+                                                            type = "box"
+                                                            class = "notif-btns"
+                                                            valign = "start"
+                                                            widgets = [
+                                                                { type = "button" class = "nbtn" show_if = "#n5_more" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-open 5" widgets = [ { type = "image" size = 16 src = "#icon_notification_expand_symbolic" } ] }
+                                                                { type = "button" class = "nbtn" show_if = "#n5_less" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-close-text" widgets = [ { type = "image" size = 16 src = "#icon_group_collapse_symbolic" } ] }
+                                                                { type = "button" class = "nbtn" on_click = "!~/.config/ironbar/scripts/qs.sh notif-rm 5" widgets = [ { type = "image" size = 16 src = "icon:window-close-symbolic" } ] }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                                { type = "box" class = "layer layer1" show_if = "#n5_layer1" transition_type = "none" }
+                                                { type = "box" class = "layer layer2" show_if = "#n5_layer2" transition_type = "none" }
+                                            ]
+                                        }
+                                    ]
+                                }
+                                // GNOME keeps Clear at the bottom left
+                                {
+                                    type = "box"
+                                    class = "notif-footer"
+                                    widgets = [ { type = "button" class = "clear" label = "Clear" show_if = "#n_any" transition_type = "none" on_click = "!~/.config/ironbar/scripts/qs.sh notif-clear" } ]
+                                }
+                            ]
+                        }
+
+                        // One card slot (%n is its number): a header (app icon, app name, time) with
+                        // expand and close buttons over its corner, then the notification's icon,
+                        // title and body.
+                        {
+                            type = "box"
+                            class = "cal-col"
+                            orientation = "vertical"
+                            valign = "start"
+                            widgets = [
+                                // weekday and date; clicking returns to the current month
+                                {
+                                    type = "button"
+                                    class = "cal-date"
+                                    on_click = "!~/.config/ironbar/scripts/qs.sh cal-today"
+                                    widgets = [ {
+                                        type = "box"
+                                        orientation = "vertical"
+                                        halign = "start"
+                                        widgets = [
+                                            { type = "box" halign = "start" widgets = [ { type = "label" class = "weekday" label = "#cal_weekday" } ] }
+                                            { type = "box" halign = "start" widgets = [ { type = "label" class = "date" label = "#cal_date" } ] }
+                                        ]
+                                    } ]
+                                }
+                                {
+                                    type = "box"
+                                    class = "cal-grid"
+                                    orientation = "vertical"
+                                    widgets = [
+                                        {
+                                            type = "box"
+                                            class = "cal-nav"
+                                            widgets = [
+                                                { type = "button" class = "nav" on_click = "!~/.config/ironbar/scripts/qs.sh cal-prev" widgets = [ { type = "image" size = 16 src = "icon:go-previous-symbolic" } ] }
+                                                { type = "label" class = "month" label = "#cal_month" }
+                                                { type = "button" class = "nav" on_click = "!~/.config/ironbar/scripts/qs.sh cal-next" widgets = [ { type = "image" size = 16 src = "icon:go-next-symbolic" } ] }
+                                            ]
+                                        }
+                                        { type = "box" class = "cal-row" widgets = [
+                                            { type = "label" class = "dow" label = "#cal_h1" } { type = "label" class = "dow" label = "#cal_h2" } { type = "label" class = "dow" label = "#cal_h3" } { type = "label" class = "dow" label = "#cal_h4" } { type = "label" class = "dow" label = "#cal_h5" } { type = "label" class = "dow" label = "#cal_h6" } { type = "label" class = "dow" label = "#cal_h7" }
+                                        ] }
+                                        { type = "box" class = "cal-row" widgets = [
+                                            { type = "label" class = "day c1" label = "#c1" } { type = "label" class = "day c2" label = "#c2" } { type = "label" class = "day c3" label = "#c3" } { type = "label" class = "day c4" label = "#c4" } { type = "label" class = "day c5" label = "#c5" } { type = "label" class = "day c6" label = "#c6" } { type = "label" class = "day c7" label = "#c7" }
+                                        ] }
+                                        { type = "box" class = "cal-row" widgets = [
+                                            { type = "label" class = "day c8" label = "#c8" } { type = "label" class = "day c9" label = "#c9" } { type = "label" class = "day c10" label = "#c10" } { type = "label" class = "day c11" label = "#c11" } { type = "label" class = "day c12" label = "#c12" } { type = "label" class = "day c13" label = "#c13" } { type = "label" class = "day c14" label = "#c14" }
+                                        ] }
+                                        { type = "box" class = "cal-row" widgets = [
+                                            { type = "label" class = "day c15" label = "#c15" } { type = "label" class = "day c16" label = "#c16" } { type = "label" class = "day c17" label = "#c17" } { type = "label" class = "day c18" label = "#c18" } { type = "label" class = "day c19" label = "#c19" } { type = "label" class = "day c20" label = "#c20" } { type = "label" class = "day c21" label = "#c21" }
+                                        ] }
+                                        { type = "box" class = "cal-row" widgets = [
+                                            { type = "label" class = "day c22" label = "#c22" } { type = "label" class = "day c23" label = "#c23" } { type = "label" class = "day c24" label = "#c24" } { type = "label" class = "day c25" label = "#c25" } { type = "label" class = "day c26" label = "#c26" } { type = "label" class = "day c27" label = "#c27" } { type = "label" class = "day c28" label = "#c28" }
+                                        ] }
+                                        { type = "box" class = "cal-row" widgets = [
+                                            { type = "label" class = "day c29" label = "#c29" } { type = "label" class = "day c30" label = "#c30" } { type = "label" class = "day c31" label = "#c31" } { type = "label" class = "day c32" label = "#c32" } { type = "label" class = "day c33" label = "#c33" } { type = "label" class = "day c34" label = "#c34" } { type = "label" class = "day c35" label = "#c35" }
+                                        ] }
+                                        { type = "box" class = "cal-row" widgets = [
+                                            { type = "label" class = "day c36" label = "#c36" } { type = "label" class = "day c37" label = "#c37" } { type = "label" class = "day c38" label = "#c38" } { type = "label" class = "day c39" label = "#c39" } { type = "label" class = "day c40" label = "#c40" } { type = "label" class = "day c41" label = "#c41" } { type = "label" class = "day c42" label = "#c42" }
+                                        ] }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+    end = [
+        { type = "tray" }
+        {
+            type = "custom"
+            name = "quick-settings"
+            class = "quick-settings"
+
+            bar = [
+                {
+                    type = "button"
+                    class = "indicators"
+                    on_click = "!~/.config/ironbar/scripts/qs.sh quick-settings"
+                    widgets = [
+                        { type = "image" size = 16 src = "icon:#net_icon" }
+                        { type = "image" size = 16 src = "icon:#vol_icon" }
+                        { type = "image" size = 16 src = "icon:#profile_icon" show_if = "#profile_bar" transition_type = "none" }
+                        { type = "image" size = 16 src = "icon:#bat_icon" show_if = "ls /sys/class/power_supply/ | grep --quiet '^BAT'" }
+                    ]
+                }
+            ]
+
+            popup = [
+                {
+                    type = "box"
+                    class = "qs-menu"
+                    orientation = "vertical"
+                    widgets = [
+                        {
+                            type = "box"
+                            name = "top-row"
+                            widgets = [
+                                {
+                                    type = "button"
+                                    class = "pill"
+                                    show_if = "ls /sys/class/power_supply/ | grep --quiet '^BAT'"
+                                    widgets = [
+                                        { type = "image" size = 16 src = "icon:#bat_icon" }
+                                        { type = "label" label = "#bat_pct" }
+                                    ]
+                                }
+                                { type = "box" name = "spacer" }
+                                { type = "button" class = "round" on_click = "!~/.config/ironbar/scripts/qs.sh screenshot" widgets = [ { type = "image" size = 16 src = "#icon_screenshooter_symbolic" } ] }
+                                { type = "button" class = "round" on_click = "!~/.config/ironbar/scripts/qs.sh menu power" widgets = [ { type = "image" size = 16 src = "icon:system-shutdown-symbolic" } ] }
+                            ]
+                        }
+                        {
+                            type = "box"
+                            class = "submenu"
+                            orientation = "vertical"
+                            show_if = "#menu_power"
+                            transition_type = "none"
+                            widgets = [
+                                {
+                                    type = "box"
+                                    class = "sub-head"
+                                    widgets = [
+                                        { type = "image" size = 24 src = "icon:system-shutdown-symbolic" class = "sub-icon" }
+                                        { type = "label" class = "sub-title" label = "Power Off" }
+                                    ]
+                                }
+                                { type = "button" class = "item" on_click = "!systemctl suspend" widgets = [ { type = "box" halign = "start" widgets = [ { type = "label" label = "Suspend" } ] } ] }
+                                { type = "button" class = "item" on_click = "!systemctl reboot" widgets = [ { type = "box" halign = "start" widgets = [ { type = "label" label = "Restart…" } ] } ] }
+                                { type = "button" class = "item" on_click = "!systemctl poweroff" widgets = [ { type = "box" halign = "start" widgets = [ { type = "label" label = "Power Off…" } ] } ] }
+                                { type = "box" class = "separator" }
+                                { type = "button" class = "item" on_click = "!loginctl terminate-session ${XDG_SESSION_ID}" widgets = [ { type = "box" halign = "start" widgets = [ { type = "label" label = "Log Out…" } ] } ] }
+                            ]
+                        }
+                        {
+                            type = "box"
+                            class = "slider-row"
+                            widgets = [
+                                {
+                                    type = "button"
+                                    class = "round"
+                                    on_click = "!wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+                                    widgets = [ { type = "image" size = 16 src = "icon:#vol_icon" } ]
+                                }
+                                {
+                                    type = "slider"
+                                    length = 316
+                                    step = 5
+                                    show_label = false
+                                    value = "500:cat ${XDG_RUNTIME_DIR}/ironbar-qs/vol"
+                                    on_change = "!wpctl set-volume @DEFAULT_AUDIO_SINK@ ${0%.*}%"
+                                }
+                            ]
+                        }
+                        {
+                            type = "box"
+                            class = "slider-row"
+                            show_if = "ls /sys/class/backlight/ | grep --quiet ."
+                            widgets = [
+                                {
+                                    type = "button"
+                                    class = "round"
+                                    widgets = [ { type = "image" size = 16 src = "icon:display-brightness-symbolic" } ]
+                                }
+                                {
+                                    type = "slider"
+                                    length = 316
+                                    min = 75
+                                    max = 7500
+                                    step = 375
+                                    show_label = false
+                                    value = "500:cat /sys/class/backlight/intel_backlight/brightness"
+                                    on_change = "!brightnessctl -q set ${0%.*}"
+                                }
+                            ]
+                        }
+                        {
+                            type = "box"
+                            class = "slider-row"
+                            show_if = "#night_on"
+                            transition_type = "none"
+                            widgets = [
+                                {
+                                    type = "button"
+                                    class = "round"
+                                    widgets = [ { type = "image" size = 16 src = "icon:night-light-symbolic" } ]
+                                }
+                                {
+                                    type = "slider"
+                                    length = 316
+                                    min = 1700
+                                    max = 4700
+                                    step = 100
+                                    show_label = false
+                                    value = "500:cat ${XDG_RUNTIME_DIR}/ironbar-qs/night_temp"
+                                    on_change = "!~/.config/ironbar/scripts/qs.sh night-temp ${0%.*}"
+                                }
+                            ]
+                        }
+                        { type = "box" class = "tile-row first" widgets = [
+                        {
+                            type = "box"
+                            class = "qtile wired"
+                            show_if = "#wired_show"
+                            transition_type = "none"
+                            widgets = [
+                                {
+                                    type = "button"
+                                    class = "main"
+                                    on_click = "!~/.config/ironbar/scripts/qs.sh wired-toggle"
+                                    widgets = [
+                                        { type = "image" size = 16 src = "icon:network-wired-symbolic" }
+                                        { type = "label" justify = "left" label = "<span weight='bold'>Wired</span>" }
+                                    ]
+                                }
+                                { type = "button" class = "arrow" on_click = "!nm-connection-editor" widgets = [ { type = "image" size = 16 src = "icon:go-next-symbolic" } ] }
+                            ]
+                        }
+                        {
+                            type = "box"
+                            class = "qtile wifi"
+                            widgets = [
+                                {
+                                    type = "button"
+                                    class = "main"
+                                    on_click = "!~/.config/ironbar/scripts/qs.sh wifi-toggle"
+                                    widgets = [
+                                        { type = "image" size = 16 src = "icon:#wifi_icon" }
+                                        { type = "label" justify = "left" label = "#wifi_markup" }
+                                    ]
+                                }
+                                { type = "button" class = "arrow" on_click = "!nm-connection-editor" widgets = [ { type = "image" size = 16 src = "icon:go-next-symbolic" } ] }
+                            ]
+                        }
+                        ] }
+                        { type = "box" class = "tile-row" widgets = [
+                        {
+                            type = "box"
+                            class = "qtile bt"
+                            widgets = [
+                                {
+                                    type = "button"
+                                    class = "main solo"
+                                    on_click = "!~/.config/ironbar/scripts/qs.sh bt-toggle"
+                                    widgets = [
+                                        { type = "image" size = 16 src = "icon:#bt_icon" }
+                                        { type = "label" justify = "left" label = "#bt_markup" }
+                                    ]
+                                }
+                            ]
+                        }
+                        {
+                            type = "box"
+                            class = "qtile profile"
+                            widgets = [
+                                {
+                                    type = "button"
+                                    class = "main"
+                                    on_click = "!~/.config/ironbar/scripts/qs.sh profile-cycle"
+                                    widgets = [
+                                        { type = "image" size = 16 src = "icon:#profile_icon" }
+                                        { type = "label" justify = "left" label = "#profile_markup" }
+                                    ]
+                                }
+                                { type = "button" class = "arrow" on_click = "!~/.config/ironbar/scripts/qs.sh menu profile" widgets = [ { type = "image" size = 16 src = "icon:go-next-symbolic" } ] }
+                            ]
+                        }
+                        ] }
+                        {
+                            type = "box"
+                            class = "submenu"
+                            orientation = "vertical"
+                            show_if = "#menu_profile"
+                            transition_type = "none"
+                            widgets = [
+                                {
+                                    type = "box"
+                                    class = "sub-head"
+                                    widgets = [
+                                        { type = "image" size = 24 src = "icon:power-profile-balanced-symbolic" class = "sub-icon accent" }
+                                        { type = "label" class = "sub-title" label = "Power Mode" }
+                                    ]
+                                }
+                                {
+                                    type = "button"
+                                    class = "pick performance"
+                                    on_click = "!~/.config/ironbar/scripts/qs.sh profile-set performance"
+                                    widgets = [
+                                        { type = "image" size = 16 src = "icon:power-profile-performance-symbolic" }
+                                        { type = "label" class = "pick-label" label = "Performance" }
+                                        { type = "image" size = 16 src = "icon:object-select-symbolic" class = "check" }
+                                    ]
+                                }
+                                {
+                                    type = "button"
+                                    class = "pick balanced"
+                                    on_click = "!~/.config/ironbar/scripts/qs.sh profile-set balanced"
+                                    widgets = [
+                                        { type = "image" size = 16 src = "icon:power-profile-balanced-symbolic" }
+                                        { type = "label" class = "pick-label" label = "Balanced" }
+                                        { type = "image" size = 16 src = "icon:object-select-symbolic" class = "check" }
+                                    ]
+                                }
+                                {
+                                    type = "button"
+                                    class = "pick power-saver"
+                                    on_click = "!~/.config/ironbar/scripts/qs.sh profile-set power-saver"
+                                    widgets = [
+                                        { type = "image" size = 16 src = "icon:power-profile-power-saver-symbolic" }
+                                        { type = "label" class = "pick-label" label = "Power Saver" }
+                                        { type = "image" size = 16 src = "icon:object-select-symbolic" class = "check" }
+                                    ]
+                                }
+                            ]
+                        }
+                        { type = "box" class = "tile-row" widgets = [
+                        {
+                            type = "box"
+                            class = "qtile night"
+                            widgets = [
+                                {
+                                    type = "button"
+                                    class = "main solo"
+                                    on_click = "!~/.config/ironbar/scripts/qs.sh night-toggle"
+                                    widgets = [
+                                        { type = "image" size = 16 src = "icon:night-light-symbolic" }
+                                        { type = "label" justify = "left" label = "<span weight='bold'>Night Light</span>" }
+                                    ]
+                                }
+                            ]
+                        }
+
+                        // Temperature slider, shown while Night Light is on: warmer to the left,
+                        // 1700K to 4700K as in GNOME's settings. It's kept across restarts.
+                        {
+                            type = "box"
+                            class = "qtile dnd"
+                            widgets = [
+                                {
+                                    type = "button"
+                                    class = "main solo"
+                                    on_click = "!~/.config/ironbar/scripts/qs.sh dnd-toggle"
+                                    widgets = [
+                                        { type = "image" size = 16 src = "icon:notifications-disabled-symbolic" }
+                                        { type = "label" justify = "left" label = "<span weight='bold'>Do Not Disturb</span>" }
+                                    ]
+                                }
+                            ]
+                        }
+                        ] }
+                        { type = "box" class = "tile-row" widgets = [
+                        {
+                            type = "box"
+                            class = "qtile kbd"
+                            show_if = "ls /sys/class/leds/ | grep --quiet kbd_backlight"
+                            transition_type = "none"
+                            widgets = [
+                                {
+                                    type = "button"
+                                    class = "main"
+                                    on_click = "!~/.config/ironbar/scripts/qs.sh kbd-toggle"
+                                    widgets = [
+                                        { type = "image" size = 16 src = "#icon_keyboard_brightness_high_symbolic" }
+                                        { type = "label" justify = "left" label = "<span weight='bold'>Keyboard</span>" }
+                                    ]
+                                }
+                                { type = "button" class = "arrow" on_click = "!~/.config/ironbar/scripts/qs.sh menu kbd" widgets = [ { type = "image" size = 16 src = "icon:go-next-symbolic" } ] }
+                            ]
+                        }
+                        {
+                            type = "box"
+                            class = "qtile airplane"
+                            widgets = [
+                                {
+                                    type = "button"
+                                    class = "main solo"
+                                    on_click = "!~/.config/ironbar/scripts/qs.sh airplane-toggle"
+                                    widgets = [
+                                        { type = "image" size = 16 src = "icon:airplane-mode-symbolic" }
+                                        { type = "label" justify = "left" label = "<span weight='bold'>Airplane Mode</span>" }
+                                    ]
+                                }
+                            ]
+                        }
+                        ] }
+                        {
+                            type = "box"
+                            class = "submenu kbd-menu"
+                            show_if = "#menu_kbd"
+                            transition_type = "none"
+                            widgets = [
+                                {
+                                    type = "button"
+                                    class = "level l0"
+                                    on_click = "!~/.config/ironbar/scripts/qs.sh kbd-set 0"
+                                    widgets = [ {
+                                        type = "box"
+                                        orientation = "vertical"
+                                        widgets = [
+                                            { type = "box" class = "level-icon" widgets = [ { type = "image" size = 16 src = "#icon_keyboard_brightness_off_symbolic" } ] }
+                                            { type = "label" label = "Off" }
+                                        ]
+                                    } ]
+                                }
+                                {
+                                    type = "button"
+                                    class = "level l1"
+                                    on_click = "!~/.config/ironbar/scripts/qs.sh kbd-set 1"
+                                    widgets = [ {
+                                        type = "box"
+                                        orientation = "vertical"
+                                        widgets = [
+                                            { type = "box" class = "level-icon" widgets = [ { type = "image" size = 16 src = "#icon_keyboard_brightness_medium_symbolic" } ] }
+                                            { type = "label" label = "Low" }
+                                        ]
+                                    } ]
+                                }
+                                {
+                                    type = "button"
+                                    class = "level l2"
+                                    on_click = "!~/.config/ironbar/scripts/qs.sh kbd-set 2"
+                                    widgets = [ {
+                                        type = "box"
+                                        orientation = "vertical"
+                                        widgets = [
+                                            { type = "box" class = "level-icon" widgets = [ { type = "image" size = 16 src = "#icon_keyboard_brightness_high_symbolic" } ] }
+                                            { type = "label" label = "High" }
+                                        ]
+                                    } ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
 }
